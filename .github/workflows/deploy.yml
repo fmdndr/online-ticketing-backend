@@ -41,7 +41,7 @@ jobs:
             --show-error \
             --max-time 30 \
             -X POST \
-            "${JENKINS_URL}/job/ticketing-pipeline/buildWithParameters?token=${JENKINS_JOB_TOKEN}" \
+            "${JENKINS_URL}/job/online-ticketing-backend/buildWithParameters?token=${JENKINS_JOB_TOKEN}" \
             --user "${JENKINS_USER}:${JENKINS_TOKEN}" \
             --data-urlencode "BRANCH=$GITHUB_REF_NAME"
 
