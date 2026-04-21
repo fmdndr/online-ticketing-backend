@@ -73,9 +73,16 @@ pipeline {
         }
 
         // =====================================================================
-        // 2. Build (.NET)
+        // 2. Build (.NET) — runs inside the official .NET 8 SDK container
         // =====================================================================
         stage('🏗️ Build') {
+            agent {
+                docker {
+                    image 'mcr.microsoft.com/dotnet/sdk:8.0'
+                    // Reuse the workspace from the outer agent so files are shared
+                    reuseNode true
+                }
+            }
             steps {
                 sh '''
                     dotnet restore EventTicketingSystem.sln
@@ -86,9 +93,15 @@ pipeline {
         }
 
         // =====================================================================
-        // 3. Test (.NET)
+        // 3. Test (.NET) — runs inside the official .NET 8 SDK container
         // =====================================================================
         stage('🧪 Test') {
+            agent {
+                docker {
+                    image 'mcr.microsoft.com/dotnet/sdk:8.0'
+                    reuseNode true
+                }
+            }
             steps {
                 sh 'dotnet test EventTicketingSystem.sln -c Release --no-build --logger "trx;LogFileName=results.trx" || true'
             }
@@ -100,7 +113,6 @@ pipeline {
                             returnStdout: true
                         ).trim()
                         if (hasTrx == 'true') {
-                            // Requires MSTest plugin or convert to JUnit if available
                             echo "📋 Test results found."
                         } else {
                             echo "⚠️  No test results found (no test projects yet)"
