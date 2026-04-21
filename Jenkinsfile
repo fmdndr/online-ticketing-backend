@@ -75,37 +75,24 @@ pipeline {
         // =====================================================================
         // 2. Build (.NET)
         // =====================================================================
-        // Jenkins agent runs inside a container, so we cannot use agent{docker}
-        // with reuseNode — the workspace path doesn't exist on the Docker host.
-        // Instead we call `docker run` directly and pass the workspace as a
-        // volume mount. The DOTNET_CLI_HOME and HOME overrides keep the SDK
-        // cache inside the workspace so it is writable by any UID.
+        // The Jenkins agent workspace lives in the container's writable overlay
+        // layer — not in a Docker volume mount — so neither -v nor --volumes-from
+        // can reach it. We pipe the workspace as a tar stream into the dotnet
+        // SDK container via stdin (-i). Files transfer over the Docker socket;
+        // no volume mount is needed.
         // =====================================================================
         stage('🏗️ Build') {
             steps {
                 sh """
-                    # --volumes-from shares the agent container's filesystem (incl. workspace)
-                    # into the dotnet container. This is the correct approach when Jenkins
-                    # itself runs inside a Docker container (DinD) — the workspace path only
-                    # exists inside the agent container, NOT on the Docker host.
-                    AGENT_CONTAINER=\$(hostname)
-
-                    docker run --rm \
-                        --volumes-from "\${AGENT_CONTAINER}" \
-                        -w "\${WORKSPACE}" \
-                        -e DOTNET_CLI_HOME="\${WORKSPACE}/.dotnet" \
-                        -e HOME="\${WORKSPACE}" \
+                    tar -C "\${WORKSPACE}" -cf - . | \
+                    docker run --rm -i \
+                        -e DOTNET_CLI_HOME=/tmp/.dotnet \
+                        -e HOME=/tmp \
+                        -w /build \
                         mcr.microsoft.com/dotnet/sdk:8.0 \
-                        dotnet restore EventTicketingSystem.sln
-
-                    docker run --rm \
-                        --volumes-from "\${AGENT_CONTAINER}" \
-                        -w "\${WORKSPACE}" \
-                        -e DOTNET_CLI_HOME="\${WORKSPACE}/.dotnet" \
-                        -e HOME="\${WORKSPACE}" \
-                        mcr.microsoft.com/dotnet/sdk:8.0 \
-                        dotnet build EventTicketingSystem.sln -c Release --no-restore
-
+                        bash -c "mkdir /build && cd /build && tar -xf - 2>/dev/null \
+                            && dotnet restore EventTicketingSystem.sln \
+                            && dotnet build EventTicketingSystem.sln -c Release --no-restore"
                     echo "✅ Build complete"
                 """
             }
@@ -117,16 +104,15 @@ pipeline {
         stage('🧪 Test') {
             steps {
                 sh """
-                    AGENT_CONTAINER=\$(hostname)
-
-                    docker run --rm \
-                        --volumes-from "\${AGENT_CONTAINER}" \
-                        -w "\${WORKSPACE}" \
-                        -e DOTNET_CLI_HOME="\${WORKSPACE}/.dotnet" \
-                        -e HOME="\${WORKSPACE}" \
+                    tar -C "\${WORKSPACE}" -cf - . | \
+                    docker run --rm -i \
+                        -e DOTNET_CLI_HOME=/tmp/.dotnet \
+                        -e HOME=/tmp \
+                        -w /build \
                         mcr.microsoft.com/dotnet/sdk:8.0 \
-                        dotnet test EventTicketingSystem.sln -c Release --no-build \
-                            --logger "trx;LogFileName=results.trx" || true
+                        bash -c "mkdir /build && cd /build && tar -xf - 2>/dev/null \
+                            && dotnet test EventTicketingSystem.sln -c Release --no-build \
+                               --logger 'trx;LogFileName=results.trx'" || true
                 """
             }
             post {
