@@ -83,16 +83,24 @@ pipeline {
         // =====================================================================
         stage('🏗️ Build') {
             steps {
-                sh '''
+                sh """
                     docker run --rm \
-                        -v "${WORKSPACE}:/workspace" \
+                        -v "\${WORKSPACE}:/workspace" \
                         -w /workspace \
                         -e DOTNET_CLI_HOME=/workspace/.dotnet \
                         -e HOME=/workspace \
                         mcr.microsoft.com/dotnet/sdk:8.0 \
-                        sh -c "dotnet restore EventTicketingSystem.sln && dotnet build EventTicketingSystem.sln -c Release --no-restore"
+                        dotnet restore EventTicketingSystem.sln
+
+                    docker run --rm \
+                        -v "\${WORKSPACE}:/workspace" \
+                        -w /workspace \
+                        -e DOTNET_CLI_HOME=/workspace/.dotnet \
+                        -e HOME=/workspace \
+                        mcr.microsoft.com/dotnet/sdk:8.0 \
+                        dotnet build EventTicketingSystem.sln -c Release --no-restore
                     echo "✅ Build complete"
-                '''
+                """
             }
         }
 
@@ -101,15 +109,16 @@ pipeline {
         // =====================================================================
         stage('🧪 Test') {
             steps {
-                sh '''
+                sh """
                     docker run --rm \
-                        -v "${WORKSPACE}:/workspace" \
+                        -v "\${WORKSPACE}:/workspace" \
                         -w /workspace \
                         -e DOTNET_CLI_HOME=/workspace/.dotnet \
                         -e HOME=/workspace \
                         mcr.microsoft.com/dotnet/sdk:8.0 \
-                        sh -c "dotnet test EventTicketingSystem.sln -c Release --no-build --logger 'trx;LogFileName=results.trx'" || true
-                '''
+                        dotnet test EventTicketingSystem.sln -c Release --no-build \
+                            --logger "trx;LogFileName=results.trx" || true
+                """
             }
             post {
                 always {
