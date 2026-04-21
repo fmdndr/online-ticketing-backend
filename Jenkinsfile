@@ -73,37 +73,43 @@ pipeline {
         }
 
         // =====================================================================
-        // 2. Build (.NET) — runs inside the official .NET 8 SDK container
+        // 2. Build (.NET)
+        // =====================================================================
+        // Jenkins agent runs inside a container, so we cannot use agent{docker}
+        // with reuseNode — the workspace path doesn't exist on the Docker host.
+        // Instead we call `docker run` directly and pass the workspace as a
+        // volume mount. The DOTNET_CLI_HOME and HOME overrides keep the SDK
+        // cache inside the workspace so it is writable by any UID.
         // =====================================================================
         stage('🏗️ Build') {
-            agent {
-                docker {
-                    image 'mcr.microsoft.com/dotnet/sdk:8.0'
-                    // Reuse the workspace from the outer agent so files are shared
-                    reuseNode true
-                }
-            }
             steps {
                 sh '''
-                    dotnet restore EventTicketingSystem.sln
-                    dotnet build EventTicketingSystem.sln -c Release --no-restore
+                    docker run --rm \
+                        -v "${WORKSPACE}:/workspace" \
+                        -w /workspace \
+                        -e DOTNET_CLI_HOME=/workspace/.dotnet \
+                        -e HOME=/workspace \
+                        mcr.microsoft.com/dotnet/sdk:8.0 \
+                        sh -c "dotnet restore EventTicketingSystem.sln && dotnet build EventTicketingSystem.sln -c Release --no-restore"
                     echo "✅ Build complete"
                 '''
             }
         }
 
         // =====================================================================
-        // 3. Test (.NET) — runs inside the official .NET 8 SDK container
+        // 3. Test (.NET)
         // =====================================================================
         stage('🧪 Test') {
-            agent {
-                docker {
-                    image 'mcr.microsoft.com/dotnet/sdk:8.0'
-                    reuseNode true
-                }
-            }
             steps {
-                sh 'dotnet test EventTicketingSystem.sln -c Release --no-build --logger "trx;LogFileName=results.trx" || true'
+                sh '''
+                    docker run --rm \
+                        -v "${WORKSPACE}:/workspace" \
+                        -w /workspace \
+                        -e DOTNET_CLI_HOME=/workspace/.dotnet \
+                        -e HOME=/workspace \
+                        mcr.microsoft.com/dotnet/sdk:8.0 \
+                        sh -c "dotnet test EventTicketingSystem.sln -c Release --no-build --logger 'trx;LogFileName=results.trx'" || true
+                '''
             }
             post {
                 always {
