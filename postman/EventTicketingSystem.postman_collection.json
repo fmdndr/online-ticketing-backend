@@ -1,0 +1,227 @@
+{
+  "info": {
+    "name": "EventTicketingSystem",
+    "_postman_id": "evt-ticketing-2026",
+    "description": "Event Ticketing System — Microservices API Collection\n\nAll requests are routed through the YARP API Gateway at http://localhost:5000",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "gateway_url",
+      "value": "http://localhost:5000"
+    },
+    {
+      "key": "user_id",
+      "value": "user-001"
+    }
+  ],
+  "item": [
+    {
+      "name": "Catalog Service",
+      "item": [
+        {
+          "name": "Get All Events",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/catalog",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "catalog"]
+            }
+          }
+        },
+        {
+          "name": "Get Event By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/catalog/{{event_id}}",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "catalog", "{{event_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Events By Category",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/catalog/category/Music",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "catalog", "category", "Music"]
+            }
+          }
+        },
+        {
+          "name": "Create Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jazz Night\",\n  \"description\": \"An evening of smooth jazz from world-class musicians.\",\n  \"category\": \"Music\",\n  \"imageUrl\": \"https://picsum.photos/seed/jazz/800/400\",\n  \"venue\": \"Blue Note Club, Istanbul\",\n  \"date\": \"2026-08-15T21:00:00Z\",\n  \"ticketTypes\": [\n    { \"name\": \"Standard\", \"price\": 120.00, \"availableQuantity\": 100 },\n    { \"name\": \"VIP\", \"price\": 300.00, \"availableQuantity\": 20 }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/api/catalog",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "catalog"]
+            }
+          }
+        },
+        {
+          "name": "Update Event",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{event_id}}\",\n  \"name\": \"Rock Festival 2026 — UPDATED\",\n  \"description\": \"Updated description\",\n  \"category\": \"Music\",\n  \"imageUrl\": \"https://picsum.photos/seed/rock/800/400\",\n  \"venue\": \"Central Park Arena, Istanbul\",\n  \"date\": \"2026-07-15T18:00:00Z\",\n  \"ticketTypes\": [\n    { \"name\": \"General Admission\", \"price\": 175.00, \"availableQuantity\": 450 },\n    { \"name\": \"VIP\", \"price\": 400.00, \"availableQuantity\": 80 }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/api/catalog",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "catalog"]
+            }
+          }
+        },
+        {
+          "name": "Delete Event",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/catalog/{{event_id}}",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "catalog", "{{event_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Basket Service",
+      "item": [
+        {
+          "name": "Get Basket",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/basket/{{user_id}}",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "basket", "{{user_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Basket (Add Items)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{user_id}}\",\n  \"items\": [\n    {\n      \"eventId\": \"{{event_id}}\",\n      \"eventName\": \"Rock Festival 2026\",\n      \"ticketTypeName\": \"VIP\",\n      \"unitPrice\": 350.00,\n      \"quantity\": 2\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/api/basket",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "basket"]
+            }
+          }
+        },
+        {
+          "name": "Delete Basket",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/basket/{{user_id}}",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "basket", "{{user_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Checkout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{user_id}}\",\n  \"totalPrice\": 700.00,\n  \"cardNumber\": \"4111111111111111\",\n  \"cardHolderName\": \"Test User\"\n}"
+            },
+            "url": {
+              "raw": "{{gateway_url}}/api/basket/checkout",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "basket", "checkout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payment Service",
+      "item": [
+        {
+          "name": "Get All Payments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/payment",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "payment"]
+            }
+          }
+        },
+        {
+          "name": "Get Payment By Order ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/payment/order/{{order_id}}",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "payment", "order", "{{order_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Payments By User ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gateway_url}}/api/payment/user/{{user_id}}",
+              "host": ["{{gateway_url}}"],
+              "path": ["api", "payment", "user", "{{user_id}}"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

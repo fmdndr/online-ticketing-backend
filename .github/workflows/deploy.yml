@@ -1,0 +1,48 @@
+# ==============================================================================
+# GitHub Actions — Jenkins Trigger
+# ==============================================================================
+# This workflow's only job is to poke Jenkins and let it do all the heavy
+# lifting: dotnet build, test, Docker push to DockerHub, and Kubernetes deploy.
+#
+# Required GitHub Secrets:
+#   JENKINS_URL        - e.g. https://jenkins.your-domain.com
+#   JENKINS_USER       - Jenkins username
+#   JENKINS_TOKEN      - Jenkins API token (User → Configure → API Token)
+#   JENKINS_JOB_TOKEN  - Remote trigger token set in the Jenkins job config
+# ==============================================================================
+
+name: Trigger Jenkins
+
+on:
+  push:
+    branches: [main, prod]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  trigger-jenkins:
+    name: 🚀 Trigger Jenkins Pipeline
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📣 Poke Jenkins
+        env:
+          JENKINS_URL: ${{ secrets.JENKINS_URL }}
+          JENKINS_USER: ${{ secrets.JENKINS_USER }}
+          JENKINS_TOKEN: ${{ secrets.JENKINS_TOKEN }}
+          JENKINS_JOB_TOKEN: ${{ secrets.JENKINS_JOB_TOKEN }}
+        run: |
+          echo "🔔 Triggering Jenkins for branch: $GITHUB_REF_NAME"
+
+          curl -f \
+            --silent \
+            --show-error \
+            --max-time 30 \
+            -X POST \
+            "${JENKINS_URL}/job/ticketing-pipeline/buildWithParameters?token=${JENKINS_JOB_TOKEN}" \
+            --user "${JENKINS_USER}:${JENKINS_TOKEN}" \
+            --data-urlencode "BRANCH=$GITHUB_REF_NAME"
+
+          echo "✅ Jenkins pipeline triggered successfully."
