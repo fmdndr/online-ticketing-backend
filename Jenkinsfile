@@ -84,21 +84,28 @@ pipeline {
         stage('🏗️ Build') {
             steps {
                 sh """
+                    # --volumes-from shares the agent container's filesystem (incl. workspace)
+                    # into the dotnet container. This is the correct approach when Jenkins
+                    # itself runs inside a Docker container (DinD) — the workspace path only
+                    # exists inside the agent container, NOT on the Docker host.
+                    AGENT_CONTAINER=\$(hostname)
+
                     docker run --rm \
-                        -v "\${WORKSPACE}:/workspace" \
-                        -w /workspace \
-                        -e DOTNET_CLI_HOME=/workspace/.dotnet \
-                        -e HOME=/workspace \
+                        --volumes-from "\${AGENT_CONTAINER}" \
+                        -w "\${WORKSPACE}" \
+                        -e DOTNET_CLI_HOME="\${WORKSPACE}/.dotnet" \
+                        -e HOME="\${WORKSPACE}" \
                         mcr.microsoft.com/dotnet/sdk:8.0 \
                         dotnet restore EventTicketingSystem.sln
 
                     docker run --rm \
-                        -v "\${WORKSPACE}:/workspace" \
-                        -w /workspace \
-                        -e DOTNET_CLI_HOME=/workspace/.dotnet \
-                        -e HOME=/workspace \
+                        --volumes-from "\${AGENT_CONTAINER}" \
+                        -w "\${WORKSPACE}" \
+                        -e DOTNET_CLI_HOME="\${WORKSPACE}/.dotnet" \
+                        -e HOME="\${WORKSPACE}" \
                         mcr.microsoft.com/dotnet/sdk:8.0 \
                         dotnet build EventTicketingSystem.sln -c Release --no-restore
+
                     echo "✅ Build complete"
                 """
             }
@@ -110,11 +117,13 @@ pipeline {
         stage('🧪 Test') {
             steps {
                 sh """
+                    AGENT_CONTAINER=\$(hostname)
+
                     docker run --rm \
-                        -v "\${WORKSPACE}:/workspace" \
-                        -w /workspace \
-                        -e DOTNET_CLI_HOME=/workspace/.dotnet \
-                        -e HOME=/workspace \
+                        --volumes-from "\${AGENT_CONTAINER}" \
+                        -w "\${WORKSPACE}" \
+                        -e DOTNET_CLI_HOME="\${WORKSPACE}/.dotnet" \
+                        -e HOME="\${WORKSPACE}" \
                         mcr.microsoft.com/dotnet/sdk:8.0 \
                         dotnet test EventTicketingSystem.sln -c Release --no-build \
                             --logger "trx;LogFileName=results.trx" || true
