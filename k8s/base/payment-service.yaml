@@ -8,8 +8,6 @@ metadata:
     app.kubernetes.io/part-of: ticketing
 spec:
   type: ClusterIP
-  # Static ClusterIP — within service CIDR (10.96.0.0/12). Do NOT change after first apply.
-  clusterIP: 10.96.1.3
   selector:
     app.kubernetes.io/name: payment-api
   ports:

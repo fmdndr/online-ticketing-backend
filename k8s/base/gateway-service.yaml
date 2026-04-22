@@ -12,8 +12,6 @@ metadata:
     metallb.universe.tf/loadBalancerIPs: "192.168.1.100"
 spec:
   type: LoadBalancer
-  # Static ClusterIP (internal) — must be within your cluster's service CIDR (default 10.96.0.0/12).
-  clusterIP: 10.96.0.10
   selector:
     app.kubernetes.io/name: gateway-api
   ports:
