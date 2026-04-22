@@ -30,6 +30,8 @@ resources:
   - payment-service.yaml
   - gateway-deployment.yaml
   - gateway-service.yaml
-  # Ingress
-  - ingress.yaml
+  # Ingress is NOT used — Nginx Proxy Manager (NPM) handles reverse proxying
+  # externally. NPM routes to gateway-api via NodePort 30080.
+  # The ingress.yaml file is kept for reference only.
+
 

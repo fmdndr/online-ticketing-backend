@@ -6,16 +6,15 @@ metadata:
     app.kubernetes.io/name: gateway-api
     app.kubernetes.io/component: gateway
     app.kubernetes.io/part-of: ticketing
-  annotations:
-    # MetalLB static external IP — set this to a free IP on your LAN (must be in the IPAddressPool you configure).
-    metallb.universe.tf/loadBalancerIPs: "192.168.1.200"   # ← must match the IP in metallb-config.yaml
 spec:
-  type: LoadBalancer
+  # NodePort — exposes the gateway on every cluster node at a fixed port.
+  # Nginx Proxy Manager (NPM) proxies to <node-IP>:<nodePort>.
+  type: NodePort
   selector:
     app.kubernetes.io/name: gateway-api
   ports:
     - name: http
       port: 80
       targetPort: 8080
+      nodePort: 30080    # Fixed port — configure NPM to proxy to this
       protocol: TCP
-

@@ -32,26 +32,14 @@ patches:
   # Add environment label to namespace
   - target:
       kind: Namespace
-      name: ticketing
-    patch: |
+      name: online-ticketing-backend
+    patch: |-
       - op: add
         path: /metadata/labels/environment
         value: prod
 
-  # Ingress host for production
-  - target:
-      kind: Ingress
-      name: ticketing-gateway
-    patch: |
-      - op: replace
-        path: /spec/rules/0/host
-        value: prod.socratic-event.com
-      - op: replace
-        path: /spec/tls/0/hosts/0
-        value: prod.socratic-event.com
-      - op: replace
-        path: /spec/tls/0/secretName
-        value: ticketing-tls
+  # NOTE: No Ingress patch — Nginx Proxy Manager (NPM) handles external routing.
+  # NPM proxies prod.socratic-event.com → <node-IP>:30080 (gateway-api NodePort).
 
   # Higher resource limits for prod (catalog)
   - target:

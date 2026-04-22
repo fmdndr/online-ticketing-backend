@@ -1,3 +1,16 @@
+# ── NOT DEPLOYED — Reference Only ──────────────────────────────────────────────
+# This Ingress resource is NOT included in kustomization.yaml.
+# External routing is handled by Nginx Proxy Manager (NPM) instead.
+#
+# NPM configuration:
+#   Domain:  prod.socratic-event.com
+#   Scheme:  http
+#   Forward: <node-IP>:30080  (gateway-api NodePort)
+#   SSL:     Managed by NPM or Cloudflare
+#
+# This file is kept for reference in case you switch to a K8s-native
+# Ingress Controller (Traefik, NGINX) in the future.
+# ───────────────────────────────────────────────────────────────────────────────
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -6,14 +19,9 @@ metadata:
     app.kubernetes.io/name: gateway-api
     app.kubernetes.io/part-of: ticketing
   annotations:
-    # Works with both nginx-ingress and Traefik (RKE2/K3s default)
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
-    # cert-manager: automatically provision & renew TLS certificates via Let's Encrypt.
-    # Requires cert-manager + a ClusterIssuer named "letsencrypt-prod" installed in the cluster.
-    # Remove this annotation if managing TLS secrets manually.
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
 spec:
   ingressClassName: nginx
   rules:
@@ -27,8 +35,3 @@ spec:
                 name: gateway-api
                 port:
                   number: 80
-  tls:
-    - hosts:
-        - prod.socratic-event.com
-      secretName: ticketing-tls
-

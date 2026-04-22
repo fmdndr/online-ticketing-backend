@@ -321,8 +321,8 @@ pipeline {
                         \${KUBECTL} get svc -n \$NS
 
                         echo ""
-                        echo "📊 Ingress:"
-                        \${KUBECTL} get ingress -n \$NS
+                        echo "📊 Gateway NodePort (NPM target):"
+                        \${KUBECTL} get svc gateway-api -n \$NS
 
                         echo ""
                         echo "📊 HPA:"
