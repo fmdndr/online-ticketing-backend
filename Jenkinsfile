@@ -272,6 +272,14 @@ pipeline {
                             \${KUBECTL} delete pvc rabbitmq-data-rabbitmq-0 -n ${env.K8S_NAMESPACE} --ignore-not-found=true
                             echo "🧹 RabbitMQ resources removed (if they existed)"
 
+                            # Recreate Kafka Service so clusterIP can be changed to None (headless).
+                            # spec.clusterIP is immutable — kubectl apply will fail if the existing
+                            # Service has a real VIP and the manifest now sets clusterIP: None.
+                            # Also delete the StatefulSet so the new pod picks up enableServiceLinks:false.
+                            \${KUBECTL} delete statefulset kafka -n ${env.K8S_NAMESPACE} --ignore-not-found=true
+                            \${KUBECTL} delete svc kafka -n ${env.K8S_NAMESPACE} --ignore-not-found=true
+                            echo "🧹 Kafka StatefulSet+Service deleted for clean recreation"
+
                             \${KUBECTL} apply --validate=false -k "\${OVERLAY}"
 
                             # ── Rolling restart (picks up new image + config) ─────────────
