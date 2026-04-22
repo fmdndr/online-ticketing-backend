@@ -20,6 +20,7 @@ resources:
   - mongo.yaml
   - redis.yaml
   - kafka.yaml
+  - kafka-ui.yaml
   - seq.yaml
   # Application Services
   - catalog-deployment.yaml

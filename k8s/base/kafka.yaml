@@ -20,6 +20,11 @@ spec:
         app.kubernetes.io/component: messaging
         app.kubernetes.io/part-of: ticketing
     spec:
+      # Prevent Kubernetes from injecting KAFKA_PORT (and other service-link env vars)
+      # into this pod. The Confluent image treats every KAFKA_* env var as a broker
+      # config property, so the auto-injected KAFKA_PORT=tcp://... would trigger
+      # "port is deprecated" and can break broker startup.
+      enableServiceLinks: false
       terminationGracePeriodSeconds: 30
       containers:
         - name: kafka

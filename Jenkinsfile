@@ -263,6 +263,15 @@ pipeline {
                             # clusterIP is immutable — must delete before recreating headless.
                             \${KUBECTL} delete statefulset postgres -n ${env.K8S_NAMESPACE} --ignore-not-found=true
                             \${KUBECTL} delete svc postgres -n ${env.K8S_NAMESPACE} --ignore-not-found=true
+
+                            # Remove old RabbitMQ resources (replaced by Kafka).
+                            # kubectl apply never removes resources dropped from the overlay.
+                            \${KUBECTL} delete statefulset rabbitmq -n ${env.K8S_NAMESPACE} --ignore-not-found=true
+                            \${KUBECTL} delete svc rabbitmq -n ${env.K8S_NAMESPACE} --ignore-not-found=true
+                            \${KUBECTL} delete configmap rabbitmq-config -n ${env.K8S_NAMESPACE} --ignore-not-found=true
+                            \${KUBECTL} delete pvc rabbitmq-data-rabbitmq-0 -n ${env.K8S_NAMESPACE} --ignore-not-found=true
+                            echo "🧹 RabbitMQ resources removed (if they existed)"
+
                             \${KUBECTL} apply --validate=false -k "\${OVERLAY}"
 
                             # ── Rolling restart (picks up new image + config) ─────────────
@@ -383,6 +392,7 @@ pipeline {
                 🌐 Port-forward for local access:
                   kubectl port-forward svc/gateway-api 5010:8080 -n ${env.K8S_NAMESPACE}
                   kubectl port-forward svc/seq          8081:80   -n ${env.K8S_NAMESPACE}
+                  kubectl port-forward svc/kafka-ui     8082:8080 -n ${env.K8S_NAMESPACE}
                 """
             }
         }
