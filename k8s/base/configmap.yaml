@@ -19,10 +19,8 @@ data:
   DatabaseSettings__DatabaseName: "CatalogDb"
   DatabaseSettings__CollectionName: "Events"
 
-  # RabbitMQ (non-secret)
-  RabbitMQ__Host: "rabbitmq"
-  RabbitMQ__Username: "guest"
-  RabbitMQ__Password: "guest"
+  # Kafka (message broker)
+  Kafka__BootstrapServers: "kafka:9092"
 
   # Redis (Basket)
   Redis__ConnectionString: "redis:6379"

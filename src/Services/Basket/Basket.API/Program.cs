@@ -2,16 +2,16 @@ using Basket.API.Consumers;
 using Basket.API.Repositories;
 using MassTransit;
 using Serilog;
+using Shared.Common.Events;
 using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Serilog
+// Serilog — read entirely from config so Production uses "http://seq:5341"
+// and Development falls back to "http://localhost:5341"
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .Enrich.FromLogContext()
-    .WriteTo.Console()
-    .WriteTo.Seq("http://localhost:5341")
     .CreateLogger();
 
 builder.Host.UseSerilog();
@@ -26,21 +26,32 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 // Repository
 builder.Services.AddScoped<IBasketRepository, BasketRepository>();
 
-// MassTransit + RabbitMQ
+// MassTransit + Kafka
 builder.Services.AddMassTransit(x =>
 {
-    x.AddConsumer<PaymentCompletedEventConsumer>();
-    x.AddConsumer<PaymentFailedEventConsumer>();
+    x.UsingInMemory();
 
-    x.UsingRabbitMq((context, cfg) =>
+    x.AddRider(rider =>
     {
-        cfg.Host(builder.Configuration.GetValue<string>("RabbitMQ:Host") ?? "localhost", "/", h =>
-        {
-            h.Username(builder.Configuration.GetValue<string>("RabbitMQ:Username") ?? "guest");
-            h.Password(builder.Configuration.GetValue<string>("RabbitMQ:Password") ?? "guest");
-        });
+        rider.AddConsumer<PaymentCompletedEventConsumer>();
+        rider.AddConsumer<PaymentFailedEventConsumer>();
 
-        cfg.ConfigureEndpoints(context);
+        rider.AddProducer<TicketReservedEvent>("ticket-reserved");
+
+        rider.UsingKafka((context, k) =>
+        {
+            k.Host(builder.Configuration.GetValue<string>("Kafka:BootstrapServers") ?? "localhost:9092");
+
+            k.TopicEndpoint<PaymentCompletedEvent>("payment-completed", "basket-service", e =>
+            {
+                e.ConfigureConsumer<PaymentCompletedEventConsumer>(context);
+            });
+
+            k.TopicEndpoint<PaymentFailedEvent>("payment-failed", "basket-service", e =>
+            {
+                e.ConfigureConsumer<PaymentFailedEventConsumer>(context);
+            });
+        });
     });
 });
 

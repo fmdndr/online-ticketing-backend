@@ -12,16 +12,16 @@ namespace Basket.API.Controllers;
 public class BasketController : ControllerBase
 {
     private readonly IBasketRepository _repository;
-    private readonly IPublishEndpoint _publishEndpoint;
+    private readonly ITopicProducer<TicketReservedEvent> _ticketReservedProducer;
     private readonly ILogger<BasketController> _logger;
 
     public BasketController(
         IBasketRepository repository,
-        IPublishEndpoint publishEndpoint,
+        ITopicProducer<TicketReservedEvent> ticketReservedProducer,
         ILogger<BasketController> logger)
     {
         _repository = repository;
-        _publishEndpoint = publishEndpoint;
+        _ticketReservedProducer = ticketReservedProducer;
         _logger = logger;
     }
 
@@ -91,7 +91,7 @@ public class BasketController : ControllerBase
                 ReservedAt = DateTime.UtcNow
             };
 
-            await _publishEndpoint.Publish(@event);
+            await _ticketReservedProducer.Produce(@event);
             _logger.LogInformation("Published TicketReservedEvent for order {OrderId}, event {EventId}",
                 orderId, item.EventId);
         }

@@ -7,8 +7,8 @@
 ## Repo Map (source of truth)
 - `src/Gateway/Gateway.API`: YARP gateway routes `/api/catalog|basket|payment` to ports `5001|5002|5003` (`appsettings.json`, `Program.cs`). Also proxies `/swagger/catalog|basket|payment` routes. Includes CORS (default origins: `http://localhost:5173`, `http://localhost:3000`; override via `Cors:AllowedOrigins` config) and `ForwardedHeaders` middleware for real client IPs behind ingress/Cloudflare.
 - `src/Services/Catalog/Catalog.API`: Mongo-backed catalog; CQRS-style handlers under `Features/Events/*` using MediatR. MongoDB is seeded at startup via `Data/CatalogContextSeed.cs`.
-- `src/Services/Basket/Basket.API`: Redis basket storage plus ticket lock management (`SETNX` via `When.NotExists`).
-- `src/Services/Payment/Payment.API`: EF Core + PostgreSQL payment records; consumes reservation events.
+- `src/Services/Basket/Basket.API`: Redis basket storage plus ticket lock management (`SETNX` via `When.NotExists`). Publishes `TicketReservedEvent` to Kafka topic `ticket-reserved`; consumes `payment-completed` and `payment-failed` topics (consumer group `basket-service`).
+- `src/Services/Payment/Payment.API`: EF Core + PostgreSQL payment records; consumes `ticket-reserved` Kafka topic (consumer group `payment-service`), publishes `payment-completed` and `payment-failed`.
 - `src/Shared/Shared.Common`: shared contracts (`DTOs/ApiResponse.cs`, `Events/*.cs`, `Models/*.cs`).
 
 ## Cross-Service Flow You Must Preserve
@@ -48,7 +48,7 @@ dotnet run --project src/Services/Payment/Payment.API --urls "http://localhost:5
 
 ## Integration Endpoints and Tools
 - Swagger: `http://localhost:5001/swagger`, `http://localhost:5002/swagger`, `http://localhost:5003/swagger`.
-- RabbitMQ UI: `http://localhost:15672` (`guest/guest`), Seq UI: `http://localhost:8081`.
+- RabbitMQ UI: ~~replaced by Kafka~~ Kafka UI: `http://localhost:8082`, Seq UI: `http://localhost:8081`.
 - Postman collection: `postman/EventTicketingSystem.postman_collection.json`.
 
 ## Agent Guardrails for Changes

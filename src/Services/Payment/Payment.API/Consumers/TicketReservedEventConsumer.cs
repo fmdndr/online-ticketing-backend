@@ -12,17 +12,20 @@ namespace Payment.API.Consumers;
 public class TicketReservedEventConsumer : IConsumer<TicketReservedEvent>
 {
     private readonly PaymentDbContext _dbContext;
-    private readonly IPublishEndpoint _publishEndpoint;
+    private readonly ITopicProducer<PaymentCompletedEvent> _completedProducer;
+    private readonly ITopicProducer<PaymentFailedEvent> _failedProducer;
     private readonly ILogger<TicketReservedEventConsumer> _logger;
     private static readonly Random _random = new();
 
     public TicketReservedEventConsumer(
         PaymentDbContext dbContext,
-        IPublishEndpoint publishEndpoint,
+        ITopicProducer<PaymentCompletedEvent> completedProducer,
+        ITopicProducer<PaymentFailedEvent> failedProducer,
         ILogger<TicketReservedEventConsumer> logger)
     {
         _dbContext = dbContext;
-        _publishEndpoint = publishEndpoint;
+        _completedProducer = completedProducer;
+        _failedProducer = failedProducer;
         _logger = logger;
     }
 
@@ -58,7 +61,7 @@ public class TicketReservedEventConsumer : IConsumer<TicketReservedEvent>
             _dbContext.Payments.Add(paymentRecord);
             await _dbContext.SaveChangesAsync();
 
-            await _publishEndpoint.Publish(new PaymentCompletedEvent
+            await _completedProducer.Produce(new PaymentCompletedEvent
             {
                 OrderId = message.OrderId,
                 UserId = message.UserId,
@@ -78,7 +81,7 @@ public class TicketReservedEventConsumer : IConsumer<TicketReservedEvent>
             _dbContext.Payments.Add(paymentRecord);
             await _dbContext.SaveChangesAsync();
 
-            await _publishEndpoint.Publish(new PaymentFailedEvent
+            await _failedProducer.Produce(new PaymentFailedEvent
             {
                 OrderId = message.OrderId,
                 UserId = message.UserId,

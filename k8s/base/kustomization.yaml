@@ -19,7 +19,7 @@ resources:
   - postgres-external.yaml
   - mongo.yaml
   - redis.yaml
-  - rabbitmq.yaml
+  - kafka.yaml
   - seq.yaml
   # Application Services
   - catalog-deployment.yaml

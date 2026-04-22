@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Payment.API.Consumers;
 using Payment.API.Data;
 using Serilog;
+using Shared.Common.Events;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,8 +19,9 @@ builder.Host.UseSerilog();
 // replace 'localhost' with 'host.docker.internal' so the container can reach host-mapped ports.
 // docker-compose overrides ConnectionStrings__PaymentDb via environment: section, so this only
 // activates when no explicit override is present.
+var isInContainer = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true";
 var connectionString = builder.Configuration.GetConnectionString("PaymentDb") ?? string.Empty;
-if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true")
+if (isInContainer)
 {
     connectionString = connectionString
         .Replace("Host=localhost", "Host=host.docker.internal")
@@ -30,25 +32,31 @@ if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true")
 builder.Services.AddDbContext<PaymentDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-// MassTransit + RabbitMQ
-var isInContainer = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true";
+// MassTransit + Kafka
 builder.Services.AddMassTransit(x =>
 {
-    x.AddConsumer<TicketReservedEventConsumer>();
+    x.UsingInMemory();
 
-    x.UsingRabbitMq((context, cfg) =>
+    x.AddRider(rider =>
     {
-        var rabbitHost = builder.Configuration.GetValue<string>("RabbitMQ:Host") ?? "localhost";
-        if (isInContainer && rabbitHost == "localhost")
-            rabbitHost = "host.docker.internal";
+        rider.AddConsumer<TicketReservedEventConsumer>();
 
-        cfg.Host(rabbitHost, "/", h =>
+        rider.AddProducer<PaymentCompletedEvent>("payment-completed");
+        rider.AddProducer<PaymentFailedEvent>("payment-failed");
+
+        rider.UsingKafka((context, k) =>
         {
-            h.Username(builder.Configuration.GetValue<string>("RabbitMQ:Username") ?? "guest");
-            h.Password(builder.Configuration.GetValue<string>("RabbitMQ:Password") ?? "guest");
-        });
+            var kafkaHost = builder.Configuration.GetValue<string>("Kafka:BootstrapServers") ?? "localhost:9092";
+            if (isInContainer && kafkaHost.StartsWith("localhost"))
+                kafkaHost = kafkaHost.Replace("localhost", "host.docker.internal");
 
-        cfg.ConfigureEndpoints(context);
+            k.Host(kafkaHost);
+
+            k.TopicEndpoint<TicketReservedEvent>("ticket-reserved", "payment-service", e =>
+            {
+                e.ConfigureConsumer<TicketReservedEventConsumer>(context);
+            });
+        });
     });
 });
 

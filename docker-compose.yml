@@ -40,19 +40,44 @@ services:
     networks:
       - ticketing-net
 
-  # ── RabbitMQ ───────────────────────────────────────
-  rabbitmq:
-    image: rabbitmq:3.13-management-alpine
-    container_name: ticketing-rabbitmq
+  # ── Kafka (KRaft — no ZooKeeper) ──────────────────
+  kafka:
+    image: confluentinc/cp-kafka:7.7.1
+    container_name: ticketing-kafka
     restart: unless-stopped
     environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "9092:9092"
     volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
+      - kafka_data:/var/lib/kafka/data
+    networks:
+      - ticketing-net
+
+  # ── Kafka UI ────────────────────────────────────────
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: ticketing-kafka-ui
+    restart: unless-stopped
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+    ports:
+      - "8082:8080"
+    depends_on:
+      - kafka
     networks:
       - ticketing-net
 
@@ -105,15 +130,13 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
       Redis__ConnectionString: "redis:6379"
-      RabbitMQ__Host: rabbitmq
-      RabbitMQ__Username: guest
-      RabbitMQ__Password: guest
+      Kafka__BootstrapServers: "kafka:9092"
       Serilog__WriteTo__1__Args__serverUrl: "http://seq:5341"
     ports:
       - "5002:8080"
     depends_on:
       - redis
-      - rabbitmq
+      - kafka
       - seq
     networks:
       - ticketing-net
@@ -129,15 +152,13 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__PaymentDb: "Host=postgres;Port=5432;Database=ticketing_payments;Username=postgres;Password=postgres"
-      RabbitMQ__Host: rabbitmq
-      RabbitMQ__Username: guest
-      RabbitMQ__Password: guest
+      Kafka__BootstrapServers: "kafka:9092"
       Serilog__WriteTo__1__Args__serverUrl: "http://seq:5341"
     ports:
       - "5003:8080"
     depends_on:
       - postgres
-      - rabbitmq
+      - kafka
       - seq
     networks:
       - ticketing-net
@@ -165,7 +186,7 @@ volumes:
   postgres_data:
   mongo_data:
   redis_data:
-  rabbitmq_data:
+  kafka_data:
   seq_data:
 
 networks:
