@@ -62,8 +62,13 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-app.UseSwagger();
-app.UseSwaggerUI();
+// Serve swagger JSON at /swagger/basket/v1/swagger.json so it works through the YARP gateway
+app.UseSwagger(c => c.RouteTemplate = "swagger/basket/{documentName}/swagger.json");
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("v1/swagger.json", "Basket API v1");
+    c.RoutePrefix = "swagger/basket";
+});
 
 app.UseCors();
 app.UseSerilogRequestLogging();

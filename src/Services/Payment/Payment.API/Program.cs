@@ -77,8 +77,13 @@ using (var scope = app.Services.CreateScope())
     await dbContext.Database.MigrateAsync();
 }
 
-app.UseSwagger();
-app.UseSwaggerUI();
+// Serve swagger JSON at /swagger/payment/v1/swagger.json so it works through the YARP gateway
+app.UseSwagger(c => c.RouteTemplate = "swagger/payment/{documentName}/swagger.json");
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("v1/swagger.json", "Payment API v1");
+    c.RoutePrefix = "swagger/payment";
+});
 
 app.UseCors();
 app.UseSerilogRequestLogging();
