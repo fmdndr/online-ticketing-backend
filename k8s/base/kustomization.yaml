@@ -13,6 +13,8 @@ resources:
   # NOTE: secret.yaml is NOT deployed from git.
   # Create 'ticketing-secrets' manually in Rancher UI before first deploy.
   # See secret.yaml.example for the required keys and structure.
+  # MetalLB IP pool (bare-metal LoadBalancer — requires MetalLB to be installed first)
+  - metallb-config.yaml
   # Infrastructure
   - postgres-external.yaml
   - mongo.yaml

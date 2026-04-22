@@ -7,9 +7,8 @@ metadata:
     app.kubernetes.io/component: gateway
     app.kubernetes.io/part-of: ticketing
   annotations:
-    # MetalLB static external IP — set this to the LAN/VIP address you want Nginx Proxy Manager to forward to.
-    # Replace 192.168.1.100 with the actual free IP on your MetalLB address pool.
-    metallb.universe.tf/loadBalancerIPs: "192.168.1.100"
+    # MetalLB static external IP — set this to a free IP on your LAN (must be in the IPAddressPool you configure).
+    metallb.universe.tf/loadBalancerIPs: "192.168.1.200"   # ← must match the IP in metallb-config.yaml
 spec:
   type: LoadBalancer
   selector:
