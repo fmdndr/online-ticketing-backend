@@ -7,10 +7,13 @@ metadata:
     app.kubernetes.io/component: gateway
     app.kubernetes.io/part-of: ticketing
   annotations:
-    # Uncomment and set a specific IP if your cloud/Rancher supports static LoadBalancer IPs:
-    # metallb.universe.tf/loadBalancerIPs: "192.168.1.100"
+    # MetalLB static external IP — set this to the LAN/VIP address you want Nginx Proxy Manager to forward to.
+    # Replace 192.168.1.100 with the actual free IP on your MetalLB address pool.
+    metallb.universe.tf/loadBalancerIPs: "192.168.1.100"
 spec:
   type: LoadBalancer
+  # Static ClusterIP (internal) — must be within your cluster's service CIDR (default 10.96.0.0/12).
+  clusterIP: 10.96.0.10
   selector:
     app.kubernetes.io/name: gateway-api
   ports:
