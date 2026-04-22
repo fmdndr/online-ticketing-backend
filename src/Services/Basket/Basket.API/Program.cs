@@ -1,8 +1,7 @@
 using Basket.API.Consumers;
+using Basket.API.Kafka;
 using Basket.API.Repositories;
-using MassTransit;
 using Serilog;
-using Shared.Common.Events;
 using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -26,34 +25,12 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 // Repository
 builder.Services.AddScoped<IBasketRepository, BasketRepository>();
 
-// MassTransit + Kafka
-builder.Services.AddMassTransit(x =>
-{
-    x.UsingInMemory();
+// Kafka producer (singleton — thread-safe)
+builder.Services.AddSingleton<IKafkaProducer, KafkaProducer>();
 
-    x.AddRider(rider =>
-    {
-        rider.AddConsumer<PaymentCompletedEventConsumer>();
-        rider.AddConsumer<PaymentFailedEventConsumer>();
-
-        rider.AddProducer<TicketReservedEvent>("ticket-reserved");
-
-        rider.UsingKafka((context, k) =>
-        {
-            k.Host(builder.Configuration.GetValue<string>("Kafka:BootstrapServers") ?? "localhost:9092");
-
-            k.TopicEndpoint<PaymentCompletedEvent>("payment-completed", "basket-service", e =>
-            {
-                e.ConfigureConsumer<PaymentCompletedEventConsumer>(context);
-            });
-
-            k.TopicEndpoint<PaymentFailedEvent>("payment-failed", "basket-service", e =>
-            {
-                e.ConfigureConsumer<PaymentFailedEventConsumer>(context);
-            });
-        });
-    });
-});
+// Kafka consumers (hosted background services)
+builder.Services.AddHostedService<PaymentCompletedEventConsumer>();
+builder.Services.AddHostedService<PaymentFailedEventConsumer>();
 
 // Controllers
 builder.Services.AddControllers();

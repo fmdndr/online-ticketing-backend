@@ -1,5 +1,5 @@
+using Basket.API.Kafka;
 using Basket.API.Repositories;
-using MassTransit;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Common.DTOs;
 using Shared.Common.Events;
@@ -12,16 +12,16 @@ namespace Basket.API.Controllers;
 public class BasketController : ControllerBase
 {
     private readonly IBasketRepository _repository;
-    private readonly ITopicProducer<TicketReservedEvent> _ticketReservedProducer;
+    private readonly IKafkaProducer _kafkaProducer;
     private readonly ILogger<BasketController> _logger;
 
     public BasketController(
         IBasketRepository repository,
-        ITopicProducer<TicketReservedEvent> ticketReservedProducer,
+        IKafkaProducer kafkaProducer,
         ILogger<BasketController> logger)
     {
         _repository = repository;
-        _ticketReservedProducer = ticketReservedProducer;
+        _kafkaProducer = kafkaProducer;
         _logger = logger;
     }
 
@@ -91,7 +91,7 @@ public class BasketController : ControllerBase
                 ReservedAt = DateTime.UtcNow
             };
 
-            await _ticketReservedProducer.Produce(@event);
+            await _kafkaProducer.ProduceAsync("ticket-reserved", @event);
             _logger.LogInformation("Published TicketReservedEvent for order {OrderId}, event {EventId}",
                 orderId, item.EventId);
         }

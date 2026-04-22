@@ -1,31 +1,81 @@
+using System.Text.Json;
 using Basket.API.Repositories;
-using MassTransit;
+using Confluent.Kafka;
 using Shared.Common.Events;
 
 namespace Basket.API.Consumers;
 
 /// <summary>
-/// Handles successful payment — clears the user's basket.
+/// Background consumer: listens on topic "payment-completed" and clears the user's basket.
 /// </summary>
-public class PaymentCompletedEventConsumer : IConsumer<PaymentCompletedEvent>
+public class PaymentCompletedEventConsumer : BackgroundService
 {
-    private readonly IBasketRepository _repository;
+    private readonly IConfiguration _configuration;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<PaymentCompletedEventConsumer> _logger;
 
-    public PaymentCompletedEventConsumer(IBasketRepository repository, ILogger<PaymentCompletedEventConsumer> logger)
+    public PaymentCompletedEventConsumer(
+        IConfiguration configuration,
+        IServiceScopeFactory scopeFactory,
+        ILogger<PaymentCompletedEventConsumer> logger)
     {
-        _repository = repository;
+        _configuration = configuration;
+        _scopeFactory = scopeFactory;
         _logger = logger;
     }
 
-    public async Task Consume(ConsumeContext<PaymentCompletedEvent> context)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var message = context.Message;
-        _logger.LogInformation("Payment completed for order {OrderId}, user {UserId}. Clearing basket.",
-            message.OrderId, message.UserId);
+        var config = new ConsumerConfig
+        {
+            BootstrapServers = _configuration["Kafka:BootstrapServers"] ?? "localhost:9092",
+            GroupId = "basket-service",
+            AutoOffsetReset = AutoOffsetReset.Earliest,
+            EnableAutoCommit = false
+        };
 
-        await _repository.DeleteBasket(message.UserId);
+        using var consumer = new ConsumerBuilder<string, string>(config).Build();
+        consumer.Subscribe("payment-completed");
+        _logger.LogInformation("PaymentCompletedEventConsumer started, subscribed to payment-completed");
 
-        _logger.LogInformation("Basket cleared for user {UserId} after successful payment", message.UserId);
+        try
+        {
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                try
+                {
+                    var result = consumer.Consume(TimeSpan.FromSeconds(1));
+                    if (result == null) continue;
+
+                    var @event = JsonSerializer.Deserialize<PaymentCompletedEvent>(result.Message.Value);
+                    if (@event == null) { consumer.Commit(result); continue; }
+
+                    _logger.LogInformation("Payment completed for order {OrderId}, user {UserId}. Clearing basket.",
+                        @event.OrderId, @event.UserId);
+
+                    using var scope = _scopeFactory.CreateScope();
+                    var repository = scope.ServiceProvider.GetRequiredService<IBasketRepository>();
+                    await repository.DeleteBasket(@event.UserId);
+
+                    _logger.LogInformation("Basket cleared for user {UserId} after successful payment", @event.UserId);
+                    consumer.Commit(result);
+                }
+                catch (ConsumeException ex)
+                {
+                    _logger.LogError(ex, "Kafka consume error on payment-completed: {Reason}", ex.Error.Reason);
+                    await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    _logger.LogError(ex, "Error processing PaymentCompletedEvent");
+                    await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+                }
+            }
+        }
+        finally
+        {
+            consumer.Close();
+            _logger.LogInformation("PaymentCompletedEventConsumer stopped");
+        }
     }
 }

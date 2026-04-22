@@ -1,13 +1,12 @@
-using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Payment.API.Consumers;
 using Payment.API.Data;
+using Payment.API.Kafka;
 using Serilog;
-using Shared.Common.Events;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Serilog - read entirely from config (no hardcoded localhost)
+// Serilog — read entirely from config
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .Enrich.FromLogContext()
@@ -32,33 +31,11 @@ if (isInContainer)
 builder.Services.AddDbContext<PaymentDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-// MassTransit + Kafka
-builder.Services.AddMassTransit(x =>
-{
-    x.UsingInMemory();
+// Kafka producer (singleton — thread-safe)
+builder.Services.AddSingleton<IKafkaProducer, KafkaProducer>();
 
-    x.AddRider(rider =>
-    {
-        rider.AddConsumer<TicketReservedEventConsumer>();
-
-        rider.AddProducer<PaymentCompletedEvent>("payment-completed");
-        rider.AddProducer<PaymentFailedEvent>("payment-failed");
-
-        rider.UsingKafka((context, k) =>
-        {
-            var kafkaHost = builder.Configuration.GetValue<string>("Kafka:BootstrapServers") ?? "localhost:9092";
-            if (isInContainer && kafkaHost.StartsWith("localhost"))
-                kafkaHost = kafkaHost.Replace("localhost", "host.docker.internal");
-
-            k.Host(kafkaHost);
-
-            k.TopicEndpoint<TicketReservedEvent>("ticket-reserved", "payment-service", e =>
-            {
-                e.ConfigureConsumer<TicketReservedEventConsumer>(context);
-            });
-        });
-    });
-});
+// Kafka consumer (hosted background service)
+builder.Services.AddHostedService<TicketReservedEventConsumer>();
 
 // Controllers
 builder.Services.AddControllers();
