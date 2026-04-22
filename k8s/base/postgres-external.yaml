@@ -1,0 +1,40 @@
+# ── Remote PostgreSQL — ExternalName mapping ───────────────────────────────────
+# The apps use "postgres:5432" as their hostname (via the connection string in
+# the secret). This Service + Endpoints pair maps that internal DNS name to
+# your remote PostgreSQL server so no app config changes are needed.
+#
+# Replace REMOTE_POSTGRES_IP with your actual server IP (e.g. 84.247.134.65).
+# ──────────────────────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: ticketing
+spec:
+  type: ClusterIP
+  clusterIP: None    # headless — resolves directly to Endpoints below
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+      protocol: TCP
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: postgres   # must match the Service name above
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: ticketing
+subsets:
+  - addresses:
+      - ip: 84.247.134.65   # ← replace with your remote PostgreSQL IP
+    ports:
+      - name: postgres
+        port: 5432
+        protocol: TCP
+

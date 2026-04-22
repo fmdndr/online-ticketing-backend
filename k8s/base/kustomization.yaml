@@ -10,9 +10,11 @@ resources:
   - namespace.yaml
   # Config & Secrets
   - configmap.yaml
-  - secret.yaml
+  # NOTE: secret.yaml is NOT deployed from git.
+  # Create 'ticketing-secrets' manually in Rancher UI before first deploy.
+  # See secret.yaml.example for the required keys and structure.
   # Infrastructure
-  - postgres.yaml
+  - postgres-external.yaml
   - mongo.yaml
   - redis.yaml
   - rabbitmq.yaml

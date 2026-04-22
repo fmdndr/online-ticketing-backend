@@ -9,7 +9,13 @@ data:
   ASPNETCORE_ENVIRONMENT: "Production"
   ASPNETCORE_URLS: "http://+:8080"
 
-  # MongoDB (Catalog)
+  # ── PostgreSQL (remote server — non-sensitive host info) ──────────────────
+  # The actual credentials are in 'ticketing-secrets' managed via Rancher UI.
+  # This host value is also used in postgres-external.yaml Endpoints.
+  POSTGRES_HOST: "84.247.134.65"   # ← replace with your remote PostgreSQL IP
+  POSTGRES_PORT: "5432"
+
+  # ── MongoDB (Catalog) ──────────────────────────────────────────────────────
   DatabaseSettings__DatabaseName: "CatalogDb"
   DatabaseSettings__CollectionName: "Events"
 
