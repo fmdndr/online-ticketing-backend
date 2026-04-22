@@ -20,6 +20,8 @@ spec:
         app.kubernetes.io/component: database
         app.kubernetes.io/part-of: ticketing
     spec:
+      # Give MongoDB time to flush WiredTiger journal and close cleanly
+      terminationGracePeriodSeconds: 60
       containers:
         - name: mongo
           image: mongo:7
@@ -33,18 +35,26 @@ spec:
             limits:
               memory: "512Mi"
               cpu: "500m"
+          lifecycle:
+            preStop:
+              exec:
+                # Signal mongod to begin clean shutdown before SIGTERM arrives
+                command: ["mongosh", "--eval", "db.adminCommand({shutdown:1,force:false,timeoutSecs:30})"]
+          # Lightweight TCP probe — avoids spawning a full mongosh process every 5s
           livenessProbe:
-            exec:
-              command: ["mongosh", "--eval", "db.adminCommand('ping')"]
+            tcpSocket:
+              port: mongo
             initialDelaySeconds: 30
-            periodSeconds: 10
+            periodSeconds: 15
             timeoutSeconds: 5
+            failureThreshold: 3
           readinessProbe:
-            exec:
-              command: ["mongosh", "--eval", "db.adminCommand('ping')"]
+            tcpSocket:
+              port: mongo
             initialDelaySeconds: 15
-            periodSeconds: 5
-            timeoutSeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
           volumeMounts:
             - name: mongo-data
               mountPath: /data/db
