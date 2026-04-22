@@ -90,7 +90,7 @@ pipeline {
                         -e HOME=/tmp \
                         -w /build \
                         mcr.microsoft.com/dotnet/sdk:8.0 \
-                        bash -c "mkdir /build && cd /build && tar -xf - 2>/dev/null \
+                        bash -c "tar -xf - 2>/dev/null \
                             && dotnet restore EventTicketingSystem.sln \
                             && dotnet build EventTicketingSystem.sln -c Release --no-restore"
                     echo "✅ Build complete"
@@ -110,7 +110,7 @@ pipeline {
                         -e HOME=/tmp \
                         -w /build \
                         mcr.microsoft.com/dotnet/sdk:8.0 \
-                        bash -c "mkdir /build && cd /build && tar -xf - 2>/dev/null \
+                        bash -c "tar -xf - 2>/dev/null \
                             && dotnet test EventTicketingSystem.sln -c Release --no-build \
                                --logger 'trx;LogFileName=results.trx'" || true
                 """
