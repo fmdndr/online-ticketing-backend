@@ -259,6 +259,10 @@ pipeline {
                             # ── Apply ─────────────────────────────────────────────────────
                             echo ""
                             echo "⬆️  Applying overlay to cluster..."
+                            # Remove in-cluster postgres (replaced by remote server).
+                            # clusterIP is immutable — must delete before recreating headless.
+                            \${KUBECTL} delete statefulset postgres -n ${env.K8S_NAMESPACE} --ignore-not-found=true
+                            \${KUBECTL} delete svc postgres -n ${env.K8S_NAMESPACE} --ignore-not-found=true
                             \${KUBECTL} apply --validate=false -k "\${OVERLAY}"
 
                             # ── Rolling restart (picks up new image + config) ─────────────
