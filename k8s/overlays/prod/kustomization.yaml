@@ -39,7 +39,7 @@ patches:
         value: prod
 
   # NOTE: No Ingress patch — Nginx Proxy Manager (NPM) handles external routing.
-  # NPM proxies prod.socratic-event.com → <node-IP>:30080 (gateway-api NodePort).
+  # NPM proxies prod.socratic-event.com → <node-IP>:30880 (gateway-api NodePort).
 
   # Higher resource limits for prod (catalog)
   - target:

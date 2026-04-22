@@ -5,8 +5,8 @@
 - Optimize for fast local iteration across `Gateway`, `Catalog`, `Basket`, `Payment`, and `Shared.Common`.
 
 ## Repo Map (source of truth)
-- `src/Gateway/Gateway.API`: YARP gateway routes `/api/catalog|basket|payment` to ports `5001|5002|5003` (`appsettings.json`, `Program.cs`).
-- `src/Services/Catalog/Catalog.API`: Mongo-backed catalog; CQRS-style handlers under `Features/Events/*` using MediatR.
+- `src/Gateway/Gateway.API`: YARP gateway routes `/api/catalog|basket|payment` to ports `5001|5002|5003` (`appsettings.json`, `Program.cs`). Also proxies `/swagger/catalog|basket|payment` routes. Includes CORS (default origins: `http://localhost:5173`, `http://localhost:3000`; override via `Cors:AllowedOrigins` config) and `ForwardedHeaders` middleware for real client IPs behind ingress/Cloudflare.
+- `src/Services/Catalog/Catalog.API`: Mongo-backed catalog; CQRS-style handlers under `Features/Events/*` using MediatR. MongoDB is seeded at startup via `Data/CatalogContextSeed.cs`.
 - `src/Services/Basket/Basket.API`: Redis basket storage plus ticket lock management (`SETNX` via `When.NotExists`).
 - `src/Services/Payment/Payment.API`: EF Core + PostgreSQL payment records; consumes reservation events.
 - `src/Shared/Shared.Common`: shared contracts (`DTOs/ApiResponse.cs`, `Events/*.cs`, `Models/*.cs`).
@@ -16,7 +16,7 @@
   1. `BasketController.Checkout` publishes `TicketReservedEvent` per basket item.
   2. `TicketReservedEventConsumer` in Payment simulates processing, writes `PaymentRecord`, then publishes `PaymentCompletedEvent` or `PaymentFailedEvent`.
   3. Basket consumers react: success clears basket; failure releases Redis locks (compensating transaction).
-- Lock semantics matter for correctness: key format is `lock:ticket:{eventId}:{ticketTypeName}` and lock value is `userId` (`BasketRepository.cs`).
+- Lock semantics matter for correctness: key format is `lock:ticket:{eventId}:{ticketTypeName}` and lock value is `userId` (`BasketRepository.cs`). Basket itself is stored under key `basket:{userId}` with a 10-minute TTL matching the lock expiry.
 
 ## Project Conventions (observed in code)
 - API responses are wrapped with `ApiResponse<T>.Success/Fail` across controllers; keep this envelope consistent.
@@ -28,16 +28,23 @@
 ## Developer Workflow (local)
 - Infrastructure only:
 ```bash
-cd /Users/fatihmahmutdundar/workspace/online-ticketing/othello-ticketing-backend
+cd /Users/fatihmahmutdundar/workspace/online-ticketing/online-ticketing-backend
 docker compose up -d
 ```
 - Build everything:
 ```bash
-dotnet build /Users/fatihmahmutdundar/workspace/online-ticketing/othello-ticketing-backend/EventTicketingSystem.sln
+dotnet build /Users/fatihmahmutdundar/workspace/online-ticketing/online-ticketing-backend/EventTicketingSystem.sln
 ```
-- Run services (separate terminals): gateway `5000`, catalog `5001`, basket `5002`, payment `5003` (see `README.md`).
+- Run services (separate terminals):
+```bash
+dotnet run --project src/Gateway/Gateway.API --urls "http://localhost:5000"
+dotnet run --project src/Services/Catalog/Catalog.API --urls "http://localhost:5001"
+dotnet run --project src/Services/Basket/Basket.API --urls "http://localhost:5002"
+dotnet run --project src/Services/Payment/Payment.API --urls "http://localhost:5003"
+```
 - In Docker Compose, gateway is mapped to `5010` (macOS port `5000` is reserved by AirPlay/Control Center).
 - Payment auto-applies EF migrations at startup (`Payment.API/Program.cs`); design-time factory exists for `dotnet ef` commands.
+- Kubernetes manifests live in `k8s/base/` (Kustomize) with a production overlay at `k8s/overlays/prod/` (includes HPA). Use `kubectl apply -k k8s/base` for local cluster deploys.
 
 ## Integration Endpoints and Tools
 - Swagger: `http://localhost:5001/swagger`, `http://localhost:5002/swagger`, `http://localhost:5003/swagger`.

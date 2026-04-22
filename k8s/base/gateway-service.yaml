@@ -16,5 +16,5 @@ spec:
     - name: http
       port: 80
       targetPort: 8080
-      nodePort: 30080    # Fixed port — configure NPM to proxy to this
+      nodePort: 30880    # Fixed port — configure NPM to proxy to this
       protocol: TCP
