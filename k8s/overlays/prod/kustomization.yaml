@@ -20,13 +20,13 @@ images:
 
 replicas:
   - name: catalog-api
-    count: 2
+    count: 1
   - name: basket-api
-    count: 2
+    count: 1
   - name: payment-api
-    count: 2
+    count: 1
   - name: gateway-api
-    count: 2
+    count: 1
 
 patches:
   # Add environment label to namespace
