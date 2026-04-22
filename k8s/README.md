@@ -51,8 +51,7 @@ api.your-ticketing-domain.com  →  your actual domain
 ### 2. Create DockerHub pull secret in the cluster
 
 ```bash
-kubectl create namespace ticketing-dev
-kubectl create namespace ticketing-prod
+kubectl create namespace online-ticketing-backend
 
 # Create pull secret in each namespace (DockerHub public repos don't need this,
 # but it prevents rate-limiting on pulls)
@@ -60,13 +59,7 @@ kubectl create secret docker-registry dockerhub-pull-secret \
   --docker-server=https://index.docker.io/v1/ \
   --docker-username=YOUR_DOCKERHUB_USERNAME \
   --docker-password=YOUR_DOCKERHUB_TOKEN \
-  -n ticketing-dev
-
-kubectl create secret docker-registry dockerhub-pull-secret \
-  --docker-server=https://index.docker.io/v1/ \
-  --docker-username=YOUR_DOCKERHUB_USERNAME \
-  --docker-password=YOUR_DOCKERHUB_TOKEN \
-  -n ticketing-prod
+  -n online-ticketing-backend
 ```
 
 > **Note**: If your DockerHub repositories are **public**, you can remove the `imagePullSecrets` section from each deployment and skip this step entirely.
@@ -78,15 +71,11 @@ Edit `base/secret.yaml` and set real passwords **or** use Rancher UI to manage s
 ## Manual Deploy
 
 ```bash
-# Deploy to dev
-kubectl apply -k k8s/overlays/dev
-
 # Deploy to prod
 kubectl apply -k k8s/overlays/prod
 
 # Check status
-kubectl get all -n ticketing-dev
-kubectl get all -n ticketing-prod
+kubectl get all -n online-ticketing-backend
 ```
 
 ## CI/CD (GitHub Actions)
@@ -132,11 +121,11 @@ The workflow in `.github/workflows/deploy.yml` automatically:
 ## Swagger UIs (port-forward for debugging)
 
 ```bash
-kubectl port-forward svc/catalog-api 5001:8080 -n ticketing-dev &
-kubectl port-forward svc/basket-api  5002:8080 -n ticketing-dev &
-kubectl port-forward svc/payment-api 5003:8080 -n ticketing-dev &
-kubectl port-forward svc/gateway-api 5010:8080 -n ticketing-dev &
-kubectl port-forward svc/seq         8081:80   -n ticketing-dev &
+kubectl port-forward svc/catalog-api 5001:8080 -n online-ticketing-backend &
+kubectl port-forward svc/basket-api  5002:8080 -n online-ticketing-backend &
+kubectl port-forward svc/payment-api 5003:8080 -n online-ticketing-backend &
+kubectl port-forward svc/gateway-api 5010:8080 -n online-ticketing-backend &
+kubectl port-forward svc/seq         8081:80   -n online-ticketing-backend &
 ```
 
 Then open:

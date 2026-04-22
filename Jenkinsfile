@@ -12,7 +12,7 @@ pipeline {
         // Application
         APP_NAME    = 'ticketing'
         APP_VERSION = "${env.BUILD_NUMBER}"
-        K8S_NAMESPACE    = 'ticketing'
+        K8S_NAMESPACE    = 'online-ticketing-backend'
 
         // DockerHub credentials — bound globally because both Docker Build and Deploy stages need them.
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-login')

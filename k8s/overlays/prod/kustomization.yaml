@@ -1,7 +1,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-namespace: ticketing
+namespace: online-ticketing-backend
 
 resources:
   - ../../base
@@ -45,13 +45,13 @@ patches:
     patch: |
       - op: replace
         path: /spec/rules/0/host
-        value: api.your-ticketing-domain.com
+        value: prod.socratic-event.com
       - op: replace
         path: /spec/tls/0/hosts/0
-        value: api.your-ticketing-domain.com
+        value: prod.socratic-event.com
       - op: replace
         path: /spec/tls/0/secretName
-        value: ticketing-prod-tls
+        value: ticketing-tls
 
   # Higher resource limits for prod (catalog)
   - target:
