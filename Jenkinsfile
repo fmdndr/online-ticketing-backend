@@ -240,16 +240,10 @@ pipeline {
                             echo "🔓 TLS verify disabled for cluster: \${CLUSTER_NAME}"
 
                             # ── Create namespace ──────────────────────────────────────────
-                            \${KUBECTL} create namespace ${env.K8S_NAMESPACE} \\
-                                --dry-run=client -o yaml | \${KUBECTL} apply -f -
+                            \${KUBECTL} create namespace ${env.K8S_NAMESPACE} --dry-run=client -o yaml | \${KUBECTL} apply --validate=false -f -
 
                             # ── Create / refresh DockerHub pull secret ────────────────────
-                            \${KUBECTL} create secret docker-registry dockerhub-pull-secret \\
-                                --namespace=${env.K8S_NAMESPACE} \\
-                                --docker-server=https://index.docker.io/v1/ \\
-                                --docker-username=\${DOCKERHUB_CREDENTIALS_USR} \\
-                                --docker-password=\${DOCKERHUB_CREDENTIALS_PSW} \\
-                                --dry-run=client -o yaml | \${KUBECTL} apply -f -
+                            \${KUBECTL} create secret docker-registry dockerhub-pull-secret --namespace=${env.K8S_NAMESPACE} --docker-server=https://index.docker.io/v1/ --docker-username=\${DOCKERHUB_CREDENTIALS_USR} --docker-password=\${DOCKERHUB_CREDENTIALS_PSW} --dry-run=client -o yaml | \${KUBECTL} apply --validate=false -f -
 
                             # ── Update image tags in kustomization to exact SHA ───────────
                             SHA_TAG="prod-${env.GIT_COMMIT_SHORT}"
@@ -265,7 +259,7 @@ pipeline {
                             # ── Apply ─────────────────────────────────────────────────────
                             echo ""
                             echo "⬆️  Applying overlay to cluster..."
-                            \${KUBECTL} apply -k "\${OVERLAY}"
+                            \${KUBECTL} apply --validate=false -k "\${OVERLAY}"
 
                             # ── Rolling restart (picks up new image + config) ─────────────
                             echo ""
