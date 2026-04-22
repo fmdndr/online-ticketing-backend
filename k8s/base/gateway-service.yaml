@@ -7,14 +7,13 @@ metadata:
     app.kubernetes.io/component: gateway
     app.kubernetes.io/part-of: ticketing
 spec:
-  # NodePort — exposes the gateway on every cluster node at a fixed port.
-  # Nginx Proxy Manager (NPM) proxies to <node-IP>:<nodePort>.
-  type: NodePort
+  # ClusterIP — exposes the gateway internally. We will use a static IP via patch.
+  # Nginx Proxy Manager (NPM) proxies directly to this clusterIP (10.43.240.101).
+  type: ClusterIP
   selector:
     app.kubernetes.io/name: gateway-api
   ports:
     - name: http
       port: 80
       targetPort: 8080
-      nodePort: 30880    # Fixed port — configure NPM to proxy to this
       protocol: TCP

@@ -5,7 +5,7 @@
 # NPM configuration:
 #   Domain:  prod.socratic-event.com
 #   Scheme:  http
-#   Forward: <node-IP>:30880  (gateway-api NodePort)
+#   Forward: 10.43.240.101:80  (gateway-api static ClusterIP)
 #   SSL:     Managed by NPM or Cloudflare
 #
 # This file is kept for reference in case you switch to a K8s-native

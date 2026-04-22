@@ -19,7 +19,7 @@ k8s/
 │   ├── catalog-deployment.yaml / catalog-service.yaml
 │   ├── basket-deployment.yaml  / basket-service.yaml
 │   ├── payment-deployment.yaml / payment-service.yaml
-│   ├── gateway-deployment.yaml / gateway-service.yaml  (NodePort 30880)
+│   ├── gateway-deployment.yaml / gateway-service.yaml  (ClusterIP 10.43.240.101)
 │   ├── ingress.yaml        # NOT deployed — kept for reference only
 │   └── kustomization.yaml
 └── overlays/
@@ -28,7 +28,7 @@ k8s/
 
 ### Traffic Flow
 ```
-Browser ──HTTPS──▶ Cloudflare ──▶ Nginx Proxy Manager (NPM) ──HTTP──▶ K8s NodePort :30880
+Browser ──HTTPS──▶ Cloudflare ──▶ Nginx Proxy Manager (NPM) ──HTTP──▶ K8s ClusterIP (10.43.240.101:80)
                                     (TLS termination)                     │
                                                                     gateway-api pod :8080
                                                                      ├── catalog-api:8080
@@ -78,8 +78,8 @@ Create a **Proxy Host** in NPM:
 |-------|-------|
 | **Domain Names** | `prod.socratic-event.com` |
 | **Scheme** | `http` |
-| **Forward Hostname / IP** | Your cluster node IP (e.g. `localhost`, `127.0.0.1`, or the node's LAN IP) |
-| **Forward Port** | `30880` |
+| **Forward Hostname / IP** | `10.43.240.101` (Static ClusterIP) |
+| **Forward Port** | `80` |
 | **Block Common Exploits** | ✅ |
 | **Websockets Support** | ✅ (optional) |
 
@@ -107,9 +107,7 @@ kubectl apply -k k8s/overlays/prod
 # Check status
 kubectl get all -n online-ticketing-backend
 
-# Verify NodePort is exposed
-kubectl get svc gateway-api -n online-ticketing-backend
-# Should show TYPE=NodePort, PORT=80:30880/TCP
+# Should show TYPE=ClusterIP, CLUSTER-IP=10.43.240.101, PORT(S)=80/TCP
 ```
 
 ## CI/CD (Jenkins)

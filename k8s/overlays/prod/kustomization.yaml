@@ -39,7 +39,7 @@ patches:
         value: prod
 
   # NOTE: No Ingress patch — Nginx Proxy Manager (NPM) handles external routing.
-  # NPM proxies prod.socratic-event.com → <node-IP>:30880 (gateway-api NodePort).
+  # NPM proxies prod.socratic-event.com → 10.43.240.101:80 (gateway-api static ClusterIP).
 
   # Higher resource limits for prod (catalog)
   - target:
@@ -128,4 +128,44 @@ patches:
         path: /spec/template/metadata/annotations
         value:
           cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+
+  # ============================================================================
+  # Static IPs — allows Nginx Proxy Manager (NPM) to route directly to services
+  # without relying on ephemeral IPs or NodePorts.
+  # IMPORTANT: If the Services already exist with a different clusterIP,
+  # delete them first before applying this overlay:
+  #   kubectl delete svc gateway-api catalog-api basket-api payment-api -n online-ticketing-backend
+  # ============================================================================
+
+  - target:
+      kind: Service
+      name: gateway-api
+    patch: |
+      - op: add
+        path: /spec/clusterIP
+        value: "10.43.240.101"
+
+  - target:
+      kind: Service
+      name: catalog-api
+    patch: |
+      - op: add
+        path: /spec/clusterIP
+        value: "10.43.240.102"
+
+  - target:
+      kind: Service
+      name: basket-api
+    patch: |
+      - op: add
+        path: /spec/clusterIP
+        value: "10.43.240.103"
+
+  - target:
+      kind: Service
+      name: payment-api
+    patch: |
+      - op: add
+        path: /spec/clusterIP
+        value: "10.43.240.104"
 
