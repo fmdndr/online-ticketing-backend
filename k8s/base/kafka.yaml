@@ -46,7 +46,7 @@ spec:
             - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
               value: "PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT"
             - name: KAFKA_CONTROLLER_QUORUM_VOTERS
-              value: "1@kafka:9093"
+              value: "1@localhost:9093"
             - name: KAFKA_CONTROLLER_LISTENER_NAMES
               value: "CONTROLLER"
             - name: KAFKA_INTER_BROKER_LISTENER_NAME
@@ -100,7 +100,8 @@ spec:
           requests:
             storage: 5Gi
 ---
-# ── Kafka Service ──────────────────────────────────────────────────────────────
+# ── Kafka Headless Service (required by StatefulSet for stable pod DNS) ────────
+# Pods are addressable as kafka-0.kafka.<namespace>.svc.cluster.local
 apiVersion: v1
 kind: Service
 metadata:
@@ -110,7 +111,7 @@ metadata:
     app.kubernetes.io/component: messaging
     app.kubernetes.io/part-of: ticketing
 spec:
-  type: ClusterIP
+  clusterIP: None   # headless — no VIP, DNS resolves directly to pod IPs
   selector:
     app.kubernetes.io/name: kafka
   ports:
