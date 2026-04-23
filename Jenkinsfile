@@ -246,6 +246,14 @@ pipeline {
                             # ── Create / refresh DockerHub pull secret ────────────────────
                             \${KUBECTL} create secret docker-registry dockerhub-pull-secret --namespace=${env.K8S_NAMESPACE} --docker-server=https://index.docker.io/v1/ --docker-username=\${DOCKERHUB_CREDENTIALS_USR} --docker-password=\${DOCKERHUB_CREDENTIALS_PSW} --dry-run=client -o yaml | \${KUBECTL} apply --validate=false -f -
 
+                            # ── Create / refresh RSA key secret (Identity + Gateway JWT) ──
+                            \${KUBECTL} create secret generic ticketing-rsa-keys \
+                                --namespace=${env.K8S_NAMESPACE} \
+                                --from-file=rsa-private.pem=keys/rsa-private.pem \
+                                --from-file=rsa-public.pem=keys/rsa-public.pem \
+                                --dry-run=client -o yaml | \${KUBECTL} apply --validate=false -f -
+                            echo "🔑 RSA key secret created/updated"
+
                             # ── Update image tags in kustomization to exact SHA ───────────
                             SHA_TAG="prod-${env.GIT_COMMIT_SHORT}"
                             OVERLAY="k8s/overlays/prod"

@@ -38,6 +38,12 @@ spec:
               value: "Production"
             - name: ASPNETCORE_URLS
               value: "http://+:8080"
+            - name: Jwt__PublicKeyPath
+              value: "/app/keys/rsa-public.pem"
+          volumeMounts:
+            - name: rsa-keys
+              mountPath: /app/keys
+              readOnly: true
           resources:
             requests:
               memory: "64Mi"
@@ -66,4 +72,8 @@ spec:
             periodSeconds: 5
             failureThreshold: 12
       terminationGracePeriodSeconds: 30
+      volumes:
+        - name: rsa-keys
+          secret:
+            secretName: ticketing-rsa-keys
 
