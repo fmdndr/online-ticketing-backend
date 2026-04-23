@@ -179,7 +179,10 @@ pipeline {
                     withCredentials([
                         file(credentialsId: 'rancher-kubeconfig',   variable: 'KUBECONFIG_CRED'),
                         file(credentialsId: 'rsa-private-key-pem',  variable: 'RSA_PRIVATE_KEY'),
-                        file(credentialsId: 'rsa-public-key-pem',   variable: 'RSA_PUBLIC_KEY')
+                        file(credentialsId: 'rsa-public-key-pem',   variable: 'RSA_PUBLIC_KEY'),
+                        string(credentialsId: 'identity-db-connstr', variable: 'IDENTITY_DB_CONNSTR'),
+                        string(credentialsId: 'payment-db-connstr',  variable: 'PAYMENT_DB_CONNSTR'),
+                        string(credentialsId: 'mongo-connstr',       variable: 'MONGO_CONNSTR')
                     ]) {
                         sh """
                             set -eu
@@ -229,6 +232,14 @@ pipeline {
                                 --from-file=rsa-public.pem="\${RSA_PUBLIC_KEY}" \
                                 --dry-run=client -o yaml | \${KUBECTL} apply --validate=false -f -
                             echo "🔑 RSA key secret created/updated"
+
+                            \${KUBECTL} create secret generic ticketing-secrets \
+                                --namespace=${env.K8S_NAMESPACE} \
+                                --from-literal=ConnectionStrings__IdentityDb="\${IDENTITY_DB_CONNSTR}" \
+                                --from-literal=ConnectionStrings__PaymentDb="\${PAYMENT_DB_CONNSTR}" \
+                                --from-literal=DatabaseSettings__ConnectionString="\${MONGO_CONNSTR}" \
+                                --dry-run=client -o yaml | \${KUBECTL} apply --validate=false -f -
+                            echo "🔑 App secrets created/updated"
 
                             # ── Update image tags in kustomization to exact SHA ───────────
                             SHA_TAG="prod-${env.GIT_COMMIT_SHORT}"
