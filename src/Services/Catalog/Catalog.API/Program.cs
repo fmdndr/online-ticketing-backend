@@ -1,6 +1,7 @@
 using Catalog.API.Data;
 using Catalog.API.Repositories;
 using Serilog;
+using Shared.Common.Auth;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +23,9 @@ builder.Services.AddScoped<ICatalogRepository, CatalogRepository>();
 
 // MediatR (CQRS)
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
+
+// JWT Authentication & Authorization
+builder.Services.AddTicketingJwtAuth(builder.Configuration);
 
 // Controllers
 builder.Services.AddControllers();
@@ -51,6 +55,9 @@ app.UseSwaggerUI(c =>
 
 app.UseCors();
 app.UseSerilogRequestLogging();
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+

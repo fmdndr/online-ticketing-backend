@@ -67,10 +67,21 @@ public class BasketRepository : IBasketRepository
         var lockKey = $"lock:ticket:{eventId}:{ticketTypeName}";
         var acquired = await _redisDb.StringSetAsync(lockKey, userId, expiry, When.NotExists);
 
+        if (!acquired)
+        {
+            var currentHolder = await _redisDb.StringGetAsync(lockKey);
+            if (currentHolder == userId)
+            {
+                await _redisDb.KeyExpireAsync(lockKey, expiry);
+                _logger.LogInformation("Lock renewed for {EventId}/{TicketType} by user {UserId}", eventId, ticketTypeName, userId);
+                return true;
+            }
+        }
+
         if (acquired)
             _logger.LogInformation("Lock acquired for {EventId}/{TicketType} by user {UserId}", eventId, ticketTypeName, userId);
         else
-            _logger.LogWarning("Lock NOT acquired for {EventId}/{TicketType} by user {UserId} — already held", eventId, ticketTypeName, userId);
+            _logger.LogWarning("Lock NOT acquired for {EventId}/{TicketType} by user {UserId} — already held by another user", eventId, ticketTypeName, userId);
 
         return acquired;
     }

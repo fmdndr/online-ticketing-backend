@@ -17,6 +17,8 @@ images:
     newTag: prod-latest
   - name: docker.io/fmdx/ticketing-gateway
     newTag: prod-latest
+  - name: docker.io/fmdx/ticketing-identity
+    newTag: prod-latest
 
 replicas:
   - name: catalog-api
@@ -26,6 +28,8 @@ replicas:
   - name: payment-api
     count: 1
   - name: gateway-api
+    count: 1
+  - name: identity-api
     count: 1
 
 patches:
@@ -169,3 +173,32 @@ patches:
         path: /spec/clusterIP
         value: "10.43.240.104"
 
+  - target:
+      kind: Service
+      name: identity-api
+    patch: |
+      - op: add
+        path: /spec/clusterIP
+        value: "10.43.240.105"
+
+  # Higher resource limits for prod (identity)
+  - target:
+      kind: Deployment
+      name: identity-api
+    patch: |
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "256Mi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: "200m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: "768Mi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: "1000m"
+      - op: add
+        path: /spec/template/metadata/annotations
+        value:
+          cluster-autoscaler.kubernetes.io/safe-to-evict: "true"

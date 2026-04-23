@@ -2,6 +2,7 @@ using Basket.API.Consumers;
 using Basket.API.Kafka;
 using Basket.API.Repositories;
 using Serilog;
+using Shared.Common.Auth;
 using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -32,6 +33,9 @@ builder.Services.AddSingleton<IKafkaProducer, KafkaProducer>();
 builder.Services.AddHostedService<PaymentCompletedEventConsumer>();
 builder.Services.AddHostedService<PaymentFailedEventConsumer>();
 
+// JWT Authentication & Authorization
+builder.Services.AddTicketingJwtAuth(builder.Configuration);
+
 // Controllers
 builder.Services.AddControllers();
 
@@ -60,6 +64,8 @@ app.UseSwaggerUI(c =>
 
 app.UseCors();
 app.UseSerilogRequestLogging();
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 
 app.Run();

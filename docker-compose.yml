@@ -110,9 +110,12 @@ services:
       DatabaseSettings__ConnectionString: "mongodb://mongo:27017"
       DatabaseSettings__DatabaseName: CatalogDb
       DatabaseSettings__CollectionName: Events
+      Jwt__PublicKeyPath: "/app/keys/rsa-public.pem"
       Serilog__WriteTo__1__Args__serverUrl: "http://seq:5341"
     ports:
       - "5001:8080"
+    volumes:
+      - ./keys:/app/keys:ro
     depends_on:
       - mongo
       - seq
@@ -131,9 +134,12 @@ services:
       ASPNETCORE_URLS: http://+:8080
       Redis__ConnectionString: "redis:6379"
       Kafka__BootstrapServers: "kafka:9092"
+      Jwt__PublicKeyPath: "/app/keys/rsa-public.pem"
       Serilog__WriteTo__1__Args__serverUrl: "http://seq:5341"
     ports:
       - "5002:8080"
+    volumes:
+      - ./keys:/app/keys:ro
     depends_on:
       - redis
       - kafka
@@ -153,12 +159,39 @@ services:
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__PaymentDb: "Host=postgres;Port=5432;Database=ticketing_payments;Username=postgres;Password=postgres"
       Kafka__BootstrapServers: "kafka:9092"
+      Jwt__PublicKeyPath: "/app/keys/rsa-public.pem"
       Serilog__WriteTo__1__Args__serverUrl: "http://seq:5341"
     ports:
       - "5003:8080"
+    volumes:
+      - ./keys:/app/keys:ro
     depends_on:
       - postgres
       - kafka
+      - seq
+    networks:
+      - ticketing-net
+
+  # ── Identity Service ─────────────────────────────────
+  identity-api:
+    build:
+      context: .
+      dockerfile: src/Services/Identity/Identity.API/Dockerfile
+    container_name: ticketing-identity
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__IdentityDb: "Host=postgres;Port=5432;Database=ticketing_identity;Username=postgres;Password=postgres"
+      Jwt__PublicKeyPath: "/app/keys/rsa-public.pem"
+      Jwt__PrivateKeyPath: "/app/keys/rsa-private.pem"
+      Serilog__WriteTo__1__Args__serverUrl: "http://seq:5341"
+    ports:
+      - "5004:8080"
+    volumes:
+      - ./keys:/app/keys:ro
+    depends_on:
+      - postgres
       - seq
     networks:
       - ticketing-net
@@ -173,12 +206,16 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
+      Jwt__PublicKeyPath: "/app/keys/rsa-public.pem"
     ports:
       - "5010:8080"
+    volumes:
+      - ./keys:/app/keys:ro
     depends_on:
       - catalog-api
       - basket-api
       - payment-api
+      - identity-api
     networks:
       - ticketing-net
 

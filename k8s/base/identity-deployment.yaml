@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: identity-api
+  labels:
+    app.kubernetes.io/name: identity-api
+    app.kubernetes.io/component: api
+    app.kubernetes.io/part-of: ticketing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: identity-api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: identity-api
+        app.kubernetes.io/component: api
+        app.kubernetes.io/part-of: ticketing
+    spec:
+      imagePullSecrets:
+        - name: dockerhub-pull-secret
+      containers:
+        - name: identity-api
+          image: docker.io/fmdx/ticketing-identity:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: ticketing-config
+            - secretRef:
+                name: ticketing-secrets
+          env:
+            - name: Jwt__PublicKeyPath
+              value: "/app/keys/rsa-public.pem"
+            - name: Jwt__PrivateKeyPath
+              value: "/app/keys/rsa-private.pem"
+          volumeMounts:
+            - name: rsa-keys
+              mountPath: /app/keys
+              readOnly: true
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /swagger/identity/index.html
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /swagger/identity/index.html
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 30
+      volumes:
+        - name: rsa-keys
+          secret:
+            secretName: ticketing-rsa-keys

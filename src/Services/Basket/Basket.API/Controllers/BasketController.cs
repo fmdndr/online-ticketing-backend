@@ -1,6 +1,8 @@
 using Basket.API.Kafka;
 using Basket.API.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Common.Auth;
 using Shared.Common.DTOs;
 using Shared.Common.Events;
 using Shared.Common.Models;
@@ -9,6 +11,7 @@ namespace Basket.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Policy = AuthPolicies.BasketAccess)]
 public class BasketController : ControllerBase
 {
     private readonly IBasketRepository _repository;

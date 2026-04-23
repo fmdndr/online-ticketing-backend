@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.HttpOverrides;
 using Serilog;
+using Shared.Common.Auth;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +21,11 @@ builder.Host.UseSerilog();
 // YARP Reverse Proxy
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+
+// ── JWT Authentication & Authorization ───────────────────────────────────────
+// Gateway validates JWT on every proxied request and forwards the Authorization
+// header downstream. This is the global filter for all requests.
+builder.Services.AddTicketingJwtAuth(builder.Configuration);
 
 // Forwarded Headers — trust Cloudflare and Ingress Controller proxy headers
 // so request logging shows real client IPs instead of internal pod IPs.
@@ -50,8 +56,13 @@ app.UseForwardedHeaders();
 app.UseCors();
 app.UseSerilogRequestLogging();
 
+// ── Auth middleware — MUST come before MapReverseProxy ────────────────────────
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.MapReverseProxy();
 
 app.MapGet("/", () => "Event Ticketing Gateway is running");
 
 app.Run();
+

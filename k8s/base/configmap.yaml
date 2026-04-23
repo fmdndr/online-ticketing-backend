@@ -28,3 +28,8 @@ data:
   # Seq (Centralized Logging)
   Serilog__WriteTo__1__Args__serverUrl: "http://seq:5341"
 
+  # JWT Authentication
+  Jwt__Issuer: "ticketing-identity"
+  Jwt__Audience: "ticketing-services"
+  Jwt__PublicKeyPath: "/app/keys/rsa-public.pem"
+

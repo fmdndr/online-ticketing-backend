@@ -2,7 +2,9 @@ using Catalog.API.Entities;
 using Catalog.API.Features.Events.Commands;
 using Catalog.API.Features.Events.Queries;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Common.Auth;
 using Shared.Common.DTOs;
 
 namespace Catalog.API.Controllers;
@@ -21,6 +23,7 @@ public class CatalogController : ControllerBase
     }
 
     [HttpGet]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<Event>>), StatusCodes.Status200OK)]
     public async Task<ActionResult<ApiResponse<IEnumerable<Event>>>> GetEvents()
     {
@@ -30,6 +33,7 @@ public class CatalogController : ControllerBase
     }
 
     [HttpGet("{id}", Name = "GetEvent")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(ApiResponse<Event>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ApiResponse<Event>>> GetEventById(string id)
@@ -44,6 +48,7 @@ public class CatalogController : ControllerBase
     }
 
     [HttpGet("category/{category}")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(ApiResponse<IEnumerable<Event>>), StatusCodes.Status200OK)]
     public async Task<ActionResult<ApiResponse<IEnumerable<Event>>>> GetEventsByCategory(string category)
     {
@@ -52,6 +57,7 @@ public class CatalogController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = AuthPolicies.CatalogWrite)]
     [ProducesResponseType(typeof(ApiResponse<Event>), StatusCodes.Status201Created)]
     public async Task<ActionResult<ApiResponse<Event>>> CreateEvent([FromBody] CreateEventCommand command)
     {
@@ -61,6 +67,7 @@ public class CatalogController : ControllerBase
     }
 
     [HttpPut]
+    [Authorize(Policy = AuthPolicies.CatalogWrite)]
     [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ApiResponse<bool>>> UpdateEvent([FromBody] UpdateEventCommand command)
@@ -75,6 +82,7 @@ public class CatalogController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Policy = AuthPolicies.CatalogWrite)]
     [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ApiResponse<bool>>> DeleteEvent(string id)

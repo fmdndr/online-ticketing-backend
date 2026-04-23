@@ -1,13 +1,16 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Payment.API.Data;
 using Payment.API.Entities;
+using Shared.Common.Auth;
 using Shared.Common.DTOs;
 
 namespace Payment.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class PaymentController : ControllerBase
 {
     private readonly PaymentDbContext _dbContext;
@@ -20,6 +23,7 @@ public class PaymentController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Policy = AuthPolicies.PaymentManage)]
     [ProducesResponseType(typeof(ApiResponse<List<PaymentRecord>>), StatusCodes.Status200OK)]
     public async Task<ActionResult<ApiResponse<List<PaymentRecord>>>> GetPayments()
     {
@@ -30,6 +34,7 @@ public class PaymentController : ControllerBase
     }
 
     [HttpGet("order/{orderId}")]
+    [Authorize(Policy = AuthPolicies.PaymentRead)]
     [ProducesResponseType(typeof(ApiResponse<PaymentRecord>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ApiResponse<PaymentRecord>>> GetPaymentByOrderId(string orderId)
@@ -46,6 +51,7 @@ public class PaymentController : ControllerBase
     }
 
     [HttpGet("user/{userId}")]
+    [Authorize(Policy = AuthPolicies.PaymentRead)]
     [ProducesResponseType(typeof(ApiResponse<List<PaymentRecord>>), StatusCodes.Status200OK)]
     public async Task<ActionResult<ApiResponse<List<PaymentRecord>>>> GetPaymentsByUserId(string userId)
     {

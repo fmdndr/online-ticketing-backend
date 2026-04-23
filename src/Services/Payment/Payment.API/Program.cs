@@ -3,6 +3,7 @@ using Payment.API.Consumers;
 using Payment.API.Data;
 using Payment.API.Kafka;
 using Serilog;
+using Shared.Common.Auth;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,6 +37,9 @@ builder.Services.AddSingleton<IKafkaProducer, KafkaProducer>();
 
 // Kafka consumer (hosted background service)
 builder.Services.AddHostedService<TicketReservedEventConsumer>();
+
+// JWT Authentication & Authorization
+builder.Services.AddTicketingJwtAuth(builder.Configuration);
 
 // Controllers
 builder.Services.AddControllers();
@@ -72,6 +76,8 @@ app.UseSwaggerUI(c =>
 
 app.UseCors();
 app.UseSerilogRequestLogging();
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 
 app.Run();

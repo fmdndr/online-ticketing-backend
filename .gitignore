@@ -483,3 +483,7 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 k8s/**/secret.yaml
+
+# RSA keys for JWT signing (never commit private key)
+keys/
+*.pem
