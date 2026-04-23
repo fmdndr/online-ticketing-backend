@@ -89,7 +89,7 @@ pipeline {
                         -e DOTNET_CLI_HOME=/tmp/.dotnet \
                         -e HOME=/tmp \
                         -w /build \
-                        mcr.microsoft.com/dotnet/sdk:8.0 \
+                        mcr.microsoft.com/dotnet/sdk:9.0 \
                         bash -c "tar -xf - 2>/dev/null \
                             && dotnet restore EventTicketingSystem.sln \
                             && dotnet build EventTicketingSystem.sln -c Release --no-restore"
@@ -109,7 +109,7 @@ pipeline {
                         -e DOTNET_CLI_HOME=/tmp/.dotnet \
                         -e HOME=/tmp \
                         -w /build \
-                        mcr.microsoft.com/dotnet/sdk:8.0 \
+                        mcr.microsoft.com/dotnet/sdk:9.0 \
                         bash -c "tar -xf - 2>/dev/null \
                             && dotnet test EventTicketingSystem.sln -c Release --no-build \
                                --logger 'trx;LogFileName=results.trx'" || true
@@ -150,11 +150,12 @@ pipeline {
                         echo "🔑 DockerHub auth configured for: \${DOCKERHUB_CREDENTIALS_USR}"
                     """
 
-                    // Build and push all 4 services in parallel
+                    // Build and push all 5 services in parallel
                     def services = [
                         [name: 'catalog',  image: 'ticketing-catalog',  dockerfile: 'src/Services/Catalog/Catalog.API/Dockerfile'],
                         [name: 'basket',   image: 'ticketing-basket',   dockerfile: 'src/Services/Basket/Basket.API/Dockerfile'],
                         [name: 'payment',  image: 'ticketing-payment',  dockerfile: 'src/Services/Payment/Payment.API/Dockerfile'],
+                        [name: 'identity', image: 'ticketing-identity', dockerfile: 'src/Services/Identity/Identity.API/Dockerfile'],
                         [name: 'gateway',  image: 'ticketing-gateway',  dockerfile: 'src/Gateway/Gateway.API/Dockerfile'],
                     ]
 
@@ -190,7 +191,7 @@ pipeline {
 
                     // Scrub credentials
                     sh "rm -f '${DOCKER_CONFIG}/config.json'"
-                    echo "✅ All 4 service images published to DockerHub."
+                    echo "✅ All 5 service images published to DockerHub."
                 }
             }
         }
@@ -285,14 +286,14 @@ pipeline {
                             # ── Rolling restart (picks up new image + config) ─────────────
                             echo ""
                             echo "🔄 Rolling restart all services..."
-                            for svc in catalog-api basket-api payment-api gateway-api; do
+                            for svc in catalog-api basket-api payment-api identity-api gateway-api; do
                                 \${KUBECTL} rollout restart deployment/\${svc} -n ${env.K8S_NAMESPACE}
                             done
 
                             # ── Wait for all rollouts ─────────────────────────────────────
                             echo ""
                             echo "⏳ Waiting for rollouts..."
-                            for svc in catalog-api basket-api payment-api gateway-api; do
+                            for svc in catalog-api basket-api payment-api identity-api gateway-api; do
                                 echo "  ⏳ \${svc}..."
                                 \${KUBECTL} rollout status deployment/\${svc} \\
                                     -n ${env.K8S_NAMESPACE} --timeout=180s
@@ -384,7 +385,7 @@ pipeline {
                 ║          ✅ DEPLOYMENT SUCCESSFUL                     ║
                 ╚═══════════════════════════════════════════════════════╝
 
-                📦 Images     : docker.io/fmdx/ticketing-{catalog|basket|payment|gateway}
+                📦 Images     : docker.io/fmdx/ticketing-{catalog|basket|payment|identity|gateway}
                 🏷  Tag        : prod-${env.GIT_COMMIT_SHORT}
                 📍 Namespace  : ${env.K8S_NAMESPACE}
                 📝 Commit     : ${env.GIT_COMMIT_MSG}
