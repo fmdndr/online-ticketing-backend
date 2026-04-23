@@ -15,7 +15,6 @@ namespace Payment.API.Data.Migrations
     [Migration("20260407184900_InitialCreate")]
     partial class InitialCreate
     {
-        /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
