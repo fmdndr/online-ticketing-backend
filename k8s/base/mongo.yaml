@@ -1,4 +1,3 @@
-# ── MongoDB StatefulSet ────────────────────────────────────────────────────────
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -20,7 +19,6 @@ spec:
         app.kubernetes.io/component: database
         app.kubernetes.io/part-of: ticketing
     spec:
-      # Give MongoDB time to flush WiredTiger journal and close cleanly
       terminationGracePeriodSeconds: 60
       containers:
         - name: mongo
@@ -38,9 +36,7 @@ spec:
           lifecycle:
             preStop:
               exec:
-                # Signal mongod to begin clean shutdown before SIGTERM arrives
                 command: ["mongosh", "--eval", "db.adminCommand({shutdown:1,force:false,timeoutSecs:30})"]
-          # Lightweight TCP probe — avoids spawning a full mongosh process every 5s
           livenessProbe:
             tcpSocket:
               port: mongo
@@ -67,7 +63,6 @@ spec:
           requests:
             storage: 5Gi
 ---
-# ── MongoDB Service ────────────────────────────────────────────────────────────
 apiVersion: v1
 kind: Service
 metadata:
@@ -84,4 +79,3 @@ spec:
     - name: mongo
       port: 27017
       targetPort: mongo
-

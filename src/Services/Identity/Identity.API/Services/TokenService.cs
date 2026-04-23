@@ -26,7 +26,6 @@ public class TokenService : ITokenService
         _dbContext = dbContext;
         _logger = logger;
 
-        // Load the RSA private key for signing tokens
         var rsa = RSA.Create();
         var privateKeyPem = File.ReadAllText(_jwtSettings.PrivateKeyPath);
         rsa.ImportFromPem(privateKeyPem);
@@ -43,13 +42,11 @@ public class TokenService : ITokenService
             new("fullName", user.FullName)
         };
 
-        // Add role claims
         foreach (var role in roles)
         {
             claims.Add(new Claim("role", role));
         }
 
-        // Add permission claims based on roles
         var permissions = new HashSet<string>();
         foreach (var role in roles)
         {
@@ -122,10 +119,8 @@ public class TokenService : ITokenService
             return null;
         }
 
-        // Revoke the old token
         existingToken.RevokedAt = DateTime.UtcNow;
 
-        // Create a new refresh token
         var newRefreshToken = new RefreshToken
         {
             Token = GenerateSecureToken(),
@@ -142,9 +137,6 @@ public class TokenService : ITokenService
         return newRefreshToken;
     }
 
-    /// <summary>
-    /// Generates a cryptographically secure random token string.
-    /// </summary>
     private static string GenerateSecureToken()
     {
         var randomBytes = new byte[64];

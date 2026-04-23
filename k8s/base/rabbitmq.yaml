@@ -1,4 +1,3 @@
-# ── RabbitMQ ConfigMap ─────────────────────────────────────────────────────────
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -9,12 +8,9 @@ metadata:
     app.kubernetes.io/part-of: ticketing
 data:
   rabbitmq.conf: |
-    # Suppress management_metrics_collection deprecation warning
     deprecated_features.permit.management_metrics_collection = true
-    # Graceful shutdown: wait up to 60s for consumers to finish
     consumer_timeout = 60000
 ---
-# ── RabbitMQ StatefulSet ───────────────────────────────────────────────────────
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -36,7 +32,6 @@ spec:
         app.kubernetes.io/component: messaging
         app.kubernetes.io/part-of: ticketing
     spec:
-      # Allow RabbitMQ time to drain connections before hard kill
       terminationGracePeriodSeconds: 60
       containers:
         - name: rabbitmq
@@ -56,7 +51,6 @@ spec:
           lifecycle:
             preStop:
               exec:
-                # Drain consumers gracefully before SIGTERM is sent
                 command: ["rabbitmqctl", "stop_app"]
           resources:
             requests:
@@ -96,7 +90,6 @@ spec:
           requests:
             storage: 2Gi
 ---
-# ── RabbitMQ Service ───────────────────────────────────────────────────────────
 apiVersion: v1
 kind: Service
 metadata:
@@ -116,4 +109,3 @@ spec:
     - name: management
       port: 15672
       targetPort: management
-

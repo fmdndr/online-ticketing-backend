@@ -5,9 +5,6 @@ using Shared.Common.Events;
 
 namespace Basket.API.Consumers;
 
-/// <summary>
-/// Background consumer: listens on topic "payment-completed" and clears the user's basket.
-/// </summary>
 public class PaymentCompletedEventConsumer : BackgroundService
 {
     private readonly IConfiguration _configuration;

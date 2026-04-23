@@ -1,3 +1,4 @@
+
 using Basket.API.Kafka;
 using Basket.API.Repositories;
 using Microsoft.AspNetCore.Authorization;
@@ -41,7 +42,6 @@ public class BasketController : ControllerBase
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<ApiResponse<ShoppingCart>>> UpdateBasket([FromBody] ShoppingCart basket)
     {
-        // Try to acquire locks for each item in the basket
         foreach (var item in basket.Items)
         {
             var lockAcquired = await _repository.AcquireLock(
@@ -79,7 +79,6 @@ public class BasketController : ControllerBase
             return BadRequest(ApiResponse<string>.Fail("Basket is empty or not found."));
         }
 
-        // Publish a TicketReservedEvent for each item
         foreach (var item in basket.Items)
         {
             var orderId = Guid.NewGuid().ToString();

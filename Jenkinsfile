@@ -4,20 +4,16 @@ pipeline {
     }
 
     environment {
-        // DockerHub
         DOCKER_REGISTRY  = 'docker.io'
         DOCKERHUB_USER   = 'fmdx'
         FULL_IMAGE_BASE  = "${DOCKER_REGISTRY}/${DOCKERHUB_USER}"
 
-        // Application
         APP_NAME    = 'ticketing'
         APP_VERSION = "${env.BUILD_NUMBER}"
         K8S_NAMESPACE    = 'online-ticketing-backend'
 
-        // DockerHub credentials — bound globally because both Docker Build and Deploy stages need them.
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-login')
 
-        // Docker config (writable location for DockerHub login)
         DOCKER_CONFIG = "${env.WORKSPACE}/.docker"
     }
 
@@ -37,9 +33,6 @@ pipeline {
     }
 
     stages {
-        // =====================================================================
-        // 1. Checkout
-        // =====================================================================
         stage('📋 Checkout') {
             steps {
                 script {
@@ -72,15 +65,6 @@ pipeline {
             }
         }
 
-        // =====================================================================
-        // 2. Build (.NET)
-        // =====================================================================
-        // The Jenkins agent workspace lives in the container's writable overlay
-        // layer — not in a Docker volume mount — so neither -v nor --volumes-from
-        // can reach it. We pipe the workspace as a tar stream into the dotnet
-        // SDK container via stdin (-i). Files transfer over the Docker socket;
-        // no volume mount is needed.
-        // =====================================================================
         stage('🏗️ Build') {
             steps {
                 sh """
@@ -98,9 +82,6 @@ pipeline {
             }
         }
 
-        // =====================================================================
-        // 3. Test (.NET)
-        // =====================================================================
         stage('🧪 Test') {
             steps {
                 sh """
@@ -132,13 +113,9 @@ pipeline {
             }
         }
 
-        // =====================================================================
-        // 4. Docker Build & Push (all 4 services in parallel)
-        // =====================================================================
         stage('🐳 Docker Build & Push') {
             steps {
                 script {
-                    // Authenticate with DockerHub once
                     sh """
                         set -euo pipefail
 
@@ -150,7 +127,6 @@ pipeline {
                         echo "🔑 DockerHub auth configured for: \${DOCKERHUB_CREDENTIALS_USR}"
                     """
 
-                    // Build and push all 5 services in parallel
                     def services = [
                         [name: 'catalog',  image: 'ticketing-catalog',  dockerfile: 'src/Services/Catalog/Catalog.API/Dockerfile'],
                         [name: 'basket',   image: 'ticketing-basket',   dockerfile: 'src/Services/Basket/Basket.API/Dockerfile'],
@@ -189,16 +165,12 @@ pipeline {
 
                     parallel parallelBuilds
 
-                    // Scrub credentials
                     sh "rm -f '${DOCKER_CONFIG}/config.json'"
                     echo "✅ All 5 service images published to DockerHub."
                 }
             }
         }
 
-        // =====================================================================
-        // 5. Deploy to Kubernetes (Rancher) via Kustomize
-        // =====================================================================
         stage('🚀 Deploy to Kubernetes') {
             steps {
                 script {
@@ -312,9 +284,6 @@ pipeline {
             }
         }
 
-        // =====================================================================
-        // 6. Verify Deployment
-        // =====================================================================
         stage('✅ Verify Deployment') {
             steps {
                 withCredentials([file(credentialsId: 'rancher-kubeconfig', variable: 'KUBECONFIG_CRED')]) {
@@ -366,9 +335,6 @@ pipeline {
             }
         }
 
-        // =====================================================================
-        // 7. Cleanup
-        // =====================================================================
         stage('🧹 Cleanup') {
             steps {
                 sh '''
@@ -429,9 +395,7 @@ pipeline {
             }
         }
         always {
-            // Ensure Docker credentials never linger on the agent
             sh 'rm -f "${WORKSPACE}/.docker/config.json" || true'
         }
     }
 }
-

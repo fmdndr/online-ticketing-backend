@@ -5,9 +5,6 @@ using Shared.Common.Events;
 
 namespace Basket.API.Consumers;
 
-/// <summary>
-/// Background consumer: listens on topic "payment-failed" and releases Redis locks (compensating transaction).
-/// </summary>
 public class PaymentFailedEventConsumer : BackgroundService
 {
     private readonly IConfiguration _configuration;

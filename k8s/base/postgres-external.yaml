@@ -1,10 +1,4 @@
-# ── Remote PostgreSQL — ExternalName mapping ───────────────────────────────────
-# The apps use "postgres:5432" as their hostname (via the connection string in
-# the secret). This Service + Endpoints pair maps that internal DNS name to
-# your remote PostgreSQL server so no app config changes are needed.
-#
-# Replace REMOTE_POSTGRES_IP with your actual server IP (e.g. 84.247.134.65).
-# ──────────────────────────────────────────────────────────────────────────────
+
 apiVersion: v1
 kind: Service
 metadata:
@@ -37,4 +31,3 @@ subsets:
       - name: postgres
         port: 5432
         protocol: TCP
-

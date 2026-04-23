@@ -1,4 +1,4 @@
-# ── Kafka UI Deployment ────────────────────────────────────────────────────────
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -57,7 +57,6 @@ spec:
             periodSeconds: 10
             failureThreshold: 12   # up to 20 + 12×10 = 140s for Spring Boot to start
 ---
-# ── Kafka UI Service ───────────────────────────────────────────────────────────
 apiVersion: v1
 kind: Service
 metadata:

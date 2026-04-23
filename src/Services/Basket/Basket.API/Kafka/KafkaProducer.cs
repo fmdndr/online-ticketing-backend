@@ -39,4 +39,3 @@ public class KafkaProducer : IKafkaProducer, IDisposable
 
     public void Dispose() => _producer.Dispose();
 }
-

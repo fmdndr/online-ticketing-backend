@@ -1,4 +1,4 @@
-# ── Seq Deployment (Centralized Logging) ──────────────────────────────────────
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -60,7 +60,6 @@ spec:
     requests:
       storage: 2Gi
 ---
-# ── Seq Service ────────────────────────────────────────────────────────────────
 apiVersion: v1
 kind: Service
 metadata:
@@ -80,4 +79,3 @@ spec:
     - name: ui
       port: 80
       targetPort: ui
-

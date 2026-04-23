@@ -1,16 +1,4 @@
-# ── NOT DEPLOYED — Reference Only ──────────────────────────────────────────────
-# This Ingress resource is NOT included in kustomization.yaml.
-# External routing is handled by Nginx Proxy Manager (NPM) instead.
-#
-# NPM configuration:
-#   Domain:  prod.socratic-event.com
-#   Scheme:  http
-#   Forward: 10.43.240.101:80  (gateway-api static ClusterIP)
-#   SSL:     Managed by NPM or Cloudflare
-#
-# This file is kept for reference in case you switch to a K8s-native
-# Ingress Controller (Traefik, NGINX) in the future.
-# ───────────────────────────────────────────────────────────────────────────────
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:

@@ -8,10 +8,6 @@ using Shared.Common.Events;
 
 namespace Payment.API.Consumers;
 
-/// <summary>
-/// Background consumer: listens on topic "ticket-reserved", simulates payment,
-/// writes PaymentRecord, then produces to payment-completed or payment-failed.
-/// </summary>
 public class TicketReservedEventConsumer : BackgroundService
 {
     private readonly IConfiguration _configuration;
@@ -72,10 +68,8 @@ public class TicketReservedEventConsumer : BackgroundService
                         Status = PaymentStatus.Pending
                     };
 
-                    // Simulate payment processing delay
                     await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
 
-                    // 80% success rate simulation
                     var isSuccess = _random.Next(100) < 80;
 
                     using var scope = _scopeFactory.CreateScope();

@@ -18,7 +18,6 @@ FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 
-# Default env vars for standalone Docker runs (Rider). docker-compose overrides these via environment: section.
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENV ConnectionStrings__PaymentDb="Host=host.docker.internal;Port=5432;Database=ticketing_payments;Username=postgres;Password=postgres"
 ENV RabbitMQ__Host=host.docker.internal

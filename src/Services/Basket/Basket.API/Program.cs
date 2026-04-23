@@ -7,8 +7,6 @@ using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Serilog — read entirely from config so Production uses "http://seq:5341"
-// and Development falls back to "http://localhost:5341"
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .Enrich.FromLogContext()
@@ -16,34 +14,26 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
-// Redis
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {
     var connectionString = builder.Configuration.GetValue<string>("Redis:ConnectionString") ?? "localhost:6379";
     return ConnectionMultiplexer.Connect(connectionString);
 });
 
-// Repository
 builder.Services.AddScoped<IBasketRepository, BasketRepository>();
 
-// Kafka producer (singleton — thread-safe)
 builder.Services.AddSingleton<IKafkaProducer, KafkaProducer>();
 
-// Kafka consumers (hosted background services)
 builder.Services.AddHostedService<PaymentCompletedEventConsumer>();
 builder.Services.AddHostedService<PaymentFailedEventConsumer>();
 
-// JWT Authentication & Authorization
 builder.Services.AddTicketingJwtAuth(builder.Configuration);
 
-// Controllers
 builder.Services.AddControllers();
 
-// Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// CORS
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
@@ -54,7 +44,6 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Serve swagger JSON at /swagger/basket/v1/swagger.json so it works through the YARP gateway
 app.UseSwagger(c => c.RouteTemplate = "swagger/basket/{documentName}/swagger.json");
 app.UseSwaggerUI(c =>
 {

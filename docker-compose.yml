@@ -1,6 +1,5 @@
 
 services:
-  # ── PostgreSQL ─────────────────────────────────────
   postgres:
     image: postgres:16-alpine
     container_name: ticketing-postgres
@@ -16,7 +15,6 @@ services:
     networks:
       - ticketing-net
 
-  # ── MongoDB ────────────────────────────────────────
   mongo:
     image: mongo:7
     container_name: ticketing-mongo
@@ -28,7 +26,6 @@ services:
     networks:
       - ticketing-net
 
-  # ── Redis ──────────────────────────────────────────
   redis:
     image: redis:7-alpine
     container_name: ticketing-redis
@@ -40,7 +37,6 @@ services:
     networks:
       - ticketing-net
 
-  # ── Kafka (KRaft — no ZooKeeper) ──────────────────
   kafka:
     image: confluentinc/cp-kafka:7.7.1
     container_name: ticketing-kafka
@@ -66,7 +62,6 @@ services:
     networks:
       - ticketing-net
 
-  # ── Kafka UI ────────────────────────────────────────
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
     container_name: ticketing-kafka-ui
@@ -81,7 +76,6 @@ services:
     networks:
       - ticketing-net
 
-  # ── Seq (Centralized Logging) ──────────────────────
   seq:
     image: datalust/seq:latest
     container_name: ticketing-seq
@@ -97,7 +91,6 @@ services:
     networks:
       - ticketing-net
 
-  # ── Catalog Service ────────────────────────────────
   catalog-api:
     build:
       context: .
@@ -122,7 +115,6 @@ services:
     networks:
       - ticketing-net
 
-  # ── Basket Service ─────────────────────────────────
   basket-api:
     build:
       context: .
@@ -147,7 +139,6 @@ services:
     networks:
       - ticketing-net
 
-  # ── Payment Service ────────────────────────────────
   payment-api:
     build:
       context: .
@@ -172,7 +163,6 @@ services:
     networks:
       - ticketing-net
 
-  # ── Identity Service ─────────────────────────────────
   identity-api:
     build:
       context: .
@@ -196,7 +186,6 @@ services:
     networks:
       - ticketing-net
 
-  # ── Gateway ────────────────────────────────────────
   gateway-api:
     build:
       context: .

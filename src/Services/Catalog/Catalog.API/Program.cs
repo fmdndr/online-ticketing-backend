@@ -5,7 +5,6 @@ using Shared.Common.Auth;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Serilog
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .Enrich.FromLogContext()
@@ -15,26 +14,19 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
-// MongoDB Context
 builder.Services.AddSingleton<ICatalogContext, CatalogContext>();
 
-// Repositories
 builder.Services.AddScoped<ICatalogRepository, CatalogRepository>();
 
-// MediatR (CQRS)
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
 
-// JWT Authentication & Authorization
 builder.Services.AddTicketingJwtAuth(builder.Configuration);
 
-// Controllers
 builder.Services.AddControllers();
 
-// Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// CORS
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
@@ -45,7 +37,6 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Serve swagger JSON at /swagger/catalog/v1/swagger.json so it works through the YARP gateway
 app.UseSwagger(c => c.RouteTemplate = "swagger/catalog/{documentName}/swagger.json");
 app.UseSwaggerUI(c =>
 {
@@ -60,4 +51,3 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
-

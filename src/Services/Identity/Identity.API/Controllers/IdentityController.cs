@@ -30,16 +30,12 @@ public class IdentityController : ControllerBase
         _logger = logger;
     }
 
-    /// <summary>
-    /// Register a new user. Assigns the "User" role by default.
-    /// </summary>
     [HttpPost("register")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(ApiResponse<AuthResponse>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<AuthResponse>), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse<AuthResponse>>> Register([FromBody] RegisterRequest request)
     {
-        // Check if user already exists
         var existingUser = await _userManager.FindByEmailAsync(request.Email);
         if (existingUser != null)
         {
@@ -63,17 +59,14 @@ public class IdentityController : ControllerBase
             return BadRequest(ApiResponse<AuthResponse>.Fail(errors));
         }
 
-        // Assign role — default to User, only allow Admin to set other roles
         var role = AppRoles.User;
         if (!string.IsNullOrEmpty(request.Role) && AppRoles.All.Contains(request.Role))
         {
-            // For now, allow setting role on registration (can be restricted later)
             role = request.Role;
         }
 
         await _userManager.AddToRoleAsync(user, role);
 
-        // Generate tokens
         var roles = await _userManager.GetRolesAsync(user);
         var accessToken = _tokenService.GenerateAccessToken(user, roles);
         var refreshToken = await _tokenService.GenerateRefreshTokenAsync(user.Id);
@@ -94,9 +87,6 @@ public class IdentityController : ControllerBase
             ApiResponse<AuthResponse>.Success(response, "Registration successful"));
     }
 
-    /// <summary>
-    /// Authenticate a user and return JWT + refresh token.
-    /// </summary>
     [HttpPost("login")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(ApiResponse<AuthResponse>), StatusCodes.Status200OK)]
@@ -136,10 +126,6 @@ public class IdentityController : ControllerBase
         return Ok(ApiResponse<AuthResponse>.Success(response, "Login successful"));
     }
 
-    /// <summary>
-    /// Refresh an access token using a valid refresh token.
-    /// The old refresh token is revoked and a new one is issued (rotation).
-    /// </summary>
     [HttpPost("refresh")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(ApiResponse<AuthResponse>), StatusCodes.Status200OK)]
@@ -176,9 +162,6 @@ public class IdentityController : ControllerBase
         return Ok(ApiResponse<AuthResponse>.Success(response, "Token refreshed successfully"));
     }
 
-    /// <summary>
-    /// Returns the authenticated user's profile.
-    /// </summary>
     [HttpGet("me")]
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]

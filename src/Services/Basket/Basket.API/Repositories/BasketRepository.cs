@@ -58,10 +58,6 @@ public class BasketRepository : IBasketRepository
         _logger.LogInformation("Basket deleted for user {UserId}", userId);
     }
 
-    /// <summary>
-    /// Acquires a distributed lock using Redis SETNX to prevent double-booking.
-    /// The lock key is based on eventId + ticketTypeName, and the value is the userId.
-    /// </summary>
     public async Task<bool> AcquireLock(string eventId, string ticketTypeName, string userId, TimeSpan expiry)
     {
         var lockKey = $"lock:ticket:{eventId}:{ticketTypeName}";
@@ -86,9 +82,6 @@ public class BasketRepository : IBasketRepository
         return acquired;
     }
 
-    /// <summary>
-    /// Releases the distributed lock only if the current holder matches the userId (safe release).
-    /// </summary>
     public async Task ReleaseLock(string eventId, string ticketTypeName, string userId)
     {
         var lockKey = $"lock:ticket:{eventId}:{ticketTypeName}";

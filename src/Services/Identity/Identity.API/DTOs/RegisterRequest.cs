@@ -15,9 +15,5 @@ public class RegisterRequest
     [Required]
     public string FullName { get; set; } = null!;
 
-    /// <summary>
-    /// Optional role. If not specified, defaults to "User".
-    /// Admin-only: can set "Seller" or "Admin" roles.
-    /// </summary>
     public string? Role { get; set; }
 }

@@ -3,10 +3,6 @@ using Microsoft.EntityFrameworkCore.Design;
 
 namespace Payment.API.Data;
 
-/// <summary>
-/// Design-time factory for EF Core migrations.
-/// Used by 'dotnet ef migrations' when the application isn't running.
-/// </summary>
 public class PaymentDbContextFactory : IDesignTimeDbContextFactory<PaymentDbContext>
 {
     public PaymentDbContext CreateDbContext(string[] args)

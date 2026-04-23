@@ -1,3 +1,4 @@
+
 apiVersion: v1
 kind: Service
 metadata:
@@ -7,8 +8,6 @@ metadata:
     app.kubernetes.io/component: gateway
     app.kubernetes.io/part-of: ticketing
 spec:
-  # ClusterIP — exposes the gateway internally. We will use a static IP via patch.
-  # Nginx Proxy Manager (NPM) proxies directly to this clusterIP (10.43.240.101).
   type: ClusterIP
   selector:
     app.kubernetes.io/name: gateway-api

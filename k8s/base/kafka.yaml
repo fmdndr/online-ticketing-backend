@@ -1,4 +1,4 @@
-# ── Kafka StatefulSet (KRaft — single node, no ZooKeeper) ─────────────────────
+
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -20,10 +20,6 @@ spec:
         app.kubernetes.io/component: messaging
         app.kubernetes.io/part-of: ticketing
     spec:
-      # Prevent Kubernetes from injecting KAFKA_PORT (and other service-link env vars)
-      # into this pod. The Confluent image treats every KAFKA_* env var as a broker
-      # config property, so the auto-injected KAFKA_PORT=tcp://... would trigger
-      # "port is deprecated" and can break broker startup.
       enableServiceLinks: false
       terminationGracePeriodSeconds: 30
       containers:
@@ -100,8 +96,6 @@ spec:
           requests:
             storage: 5Gi
 ---
-# ── Kafka Headless Service (required by StatefulSet for stable pod DNS) ────────
-# Pods are addressable as kafka-0.kafka.<namespace>.svc.cluster.local
 apiVersion: v1
 kind: Service
 metadata:
@@ -121,4 +115,3 @@ spec:
     - name: controller
       port: 9093
       targetPort: controller
-
