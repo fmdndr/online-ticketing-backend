@@ -176,7 +176,11 @@ pipeline {
                 script {
                     input message: "🚀 Deploy build #${env.APP_VERSION} (${env.GIT_COMMIT_SHORT}) to PRODUCTION?", ok: "Yes, Deploy!"
 
-                    withCredentials([file(credentialsId: 'rancher-kubeconfig', variable: 'KUBECONFIG_CRED')]) {
+                    withCredentials([
+                        file(credentialsId: 'rancher-kubeconfig',   variable: 'KUBECONFIG_CRED'),
+                        file(credentialsId: 'rsa-private-key-pem',  variable: 'RSA_PRIVATE_KEY'),
+                        file(credentialsId: 'rsa-public-key-pem',   variable: 'RSA_PUBLIC_KEY')
+                    ]) {
                         sh """
                             set -eu
 
@@ -221,8 +225,8 @@ pipeline {
                             # ── Create / refresh RSA key secret (Identity + Gateway JWT) ──
                             \${KUBECTL} create secret generic ticketing-rsa-keys \
                                 --namespace=${env.K8S_NAMESPACE} \
-                                --from-file=rsa-private.pem=keys/rsa-private.pem \
-                                --from-file=rsa-public.pem=keys/rsa-public.pem \
+                                --from-file=rsa-private.pem="\${RSA_PRIVATE_KEY}" \
+                                --from-file=rsa-public.pem="\${RSA_PUBLIC_KEY}" \
                                 --dry-run=client -o yaml | \${KUBECTL} apply --validate=false -f -
                             echo "🔑 RSA key secret created/updated"
 
