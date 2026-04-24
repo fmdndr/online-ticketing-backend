@@ -8,7 +8,9 @@ public class PaymentDbContextFactory : IDesignTimeDbContextFactory<PaymentDbCont
     public PaymentDbContext CreateDbContext(string[] args)
     {
         var optionsBuilder = new DbContextOptionsBuilder<PaymentDbContext>();
-        optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=ticketing_payments;Username=postgres;Password=postgres");
+        var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__PaymentDb")
+            ?? throw new InvalidOperationException("ConnectionStrings__PaymentDb environment variable is not set.");
+        optionsBuilder.UseNpgsql(connectionString);
 
         return new PaymentDbContext(optionsBuilder.Options);
     }

@@ -92,7 +92,8 @@ pipeline {
                         -w /build \
                         mcr.microsoft.com/dotnet/sdk:9.0 \
                         bash -c "tar -xf - 2>/dev/null \
-                            && dotnet test EventTicketingSystem.sln -c Release --no-build \
+                            && dotnet restore EventTicketingSystem.sln \
+                            && dotnet test EventTicketingSystem.sln -c Release --no-restore \
                                --logger 'trx;LogFileName=results.trx'" || true
                 """
             }

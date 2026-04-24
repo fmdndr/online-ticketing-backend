@@ -5,9 +5,9 @@ services:
     container_name: ticketing-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: ticketing_payments
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432"
     volumes:
@@ -82,7 +82,7 @@ services:
     restart: unless-stopped
     environment:
       ACCEPT_EULA: "Y"
-      SEQ_FIRSTRUN_ADMINPASSWORD: "admin123!"
+      SEQ_FIRSTRUN_ADMINPASSWORD: ${SEQ_ADMIN_PASSWORD}
     ports:
       - "5341:5341"
       - "8081:80"
@@ -148,7 +148,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__PaymentDb: "Host=postgres;Port=5432;Database=ticketing_payments;Username=postgres;Password=postgres"
+      ConnectionStrings__PaymentDb: ${PAYMENT_DB_CONNECTION}
       Kafka__BootstrapServers: "kafka:9092"
       Jwt__PublicKeyPath: "/app/keys/rsa-public.pem"
       Serilog__WriteTo__1__Args__serverUrl: "http://seq:5341"
@@ -172,7 +172,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__IdentityDb: "Host=postgres;Port=5432;Database=ticketing_identity;Username=postgres;Password=postgres"
+      ConnectionStrings__IdentityDb: ${IDENTITY_DB_CONNECTION}
       Jwt__PublicKeyPath: "/app/keys/rsa-public.pem"
       Jwt__PrivateKeyPath: "/app/keys/rsa-private.pem"
       Serilog__WriteTo__1__Args__serverUrl: "http://seq:5341"

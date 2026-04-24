@@ -43,7 +43,7 @@
       "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}/swagger",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Production",
-        "ConnectionStrings__PaymentDb": "Host=host.docker.internal;Port=5432;Database=ticketing_payments;Username=postgres;Password=postgres",
+        "ConnectionStrings__PaymentDb": "Host=host.docker.internal;Port=5432;Database=ticketing_payments;Username=CHANGE_ME;Password=CHANGE_ME",
         "RabbitMQ__Host": "host.docker.internal",
         "RabbitMQ__Username": "guest",
         "RabbitMQ__Password": "guest",

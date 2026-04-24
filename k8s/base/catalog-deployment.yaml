@@ -39,6 +39,10 @@ spec:
                 name: ticketing-config
             - secretRef:
                 name: ticketing-secrets
+          volumeMounts:
+            - name: rsa-keys
+              mountPath: /app/keys
+              readOnly: true
           resources:
             requests:
               memory: "128Mi"
@@ -67,3 +71,7 @@ spec:
             periodSeconds: 5
             failureThreshold: 12
       terminationGracePeriodSeconds: 30
+      volumes:
+        - name: rsa-keys
+          secret:
+            secretName: ticketing-rsa-keys

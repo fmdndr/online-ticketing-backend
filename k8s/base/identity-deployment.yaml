@@ -1,4 +1,3 @@
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -9,9 +8,15 @@ metadata:
     app.kubernetes.io/part-of: ticketing
 spec:
   replicas: 1
+  revisionHistoryLimit: 5
   selector:
     matchLabels:
       app.kubernetes.io/name: identity-api
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
   template:
     metadata:
       labels:
@@ -25,7 +30,9 @@ spec:
         - name: identity-api
           image: docker.io/fmdx/ticketing-identity:latest
           ports:
-            - containerPort: 8080
+            - name: http
+              containerPort: 8080
+              protocol: TCP
           envFrom:
             - configMapRef:
                 name: ticketing-config
@@ -47,18 +54,30 @@ spec:
             limits:
               memory: "512Mi"
               cpu: "500m"
+          startupProbe:
+            httpGet:
+              path: /swagger/identity/index.html
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 18
           readinessProbe:
             httpGet:
               path: /swagger/identity/index.html
-              port: 8080
-            initialDelaySeconds: 10
+              port: http
+            initialDelaySeconds: 5
             periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
           livenessProbe:
             httpGet:
               path: /swagger/identity/index.html
-              port: 8080
-            initialDelaySeconds: 15
+              port: http
+            initialDelaySeconds: 5
             periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+      terminationGracePeriodSeconds: 30
       volumes:
         - name: rsa-keys
           secret:
